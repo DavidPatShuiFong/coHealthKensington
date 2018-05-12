@@ -1,0 +1,130 @@
+---
+title: "Results notified, coHealth Kensington, 2015-2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(broom)
+library(plotly)
+```
+
+## Results notified (of results marked 'discuss'), Medical Director extracts
+
+```{r data}
+
+discuss <- data.frame(Date = 'Jul2015', ResultAge = 1, NotNotified = 88, Notified = 16)
+
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 2, NotNotified = 79,Notified = 35))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 3, NotNotified = 81,Notified = 52))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 4, NotNotified = 30,Notified = 45))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 5, NotNotified = 25,Notified = 43))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 6, NotNotified = 36,Notified = 51))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 7, NotNotified = 14,Notified = 53))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 8, NotNotified = 22,Notified = 96))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 9, NotNotified = 31,Notified = 71))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 10, NotNotified = 21,Notified = 56))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 11, NotNotified = 31,Notified = 94))
+discuss <- rbind(discuss, data.frame(Date = 'Jul2015', ResultAge = 12, NotNotified = 26,Notified = 72))
+
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 1, NotNotified = 86,Notified = 15))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 2, NotNotified = 41,Notified = 20))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 3, NotNotified = 26,Notified = 37))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 4, NotNotified = 75,Notified = 44))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 5, NotNotified = 42,Notified = 51))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 6, NotNotified = 23,Notified = 64))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 7, NotNotified = 43,Notified = 73))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 8, NotNotified = 38,Notified = 40))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 9, NotNotified = 30,Notified = 69))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 10, NotNotified = 47,Notified = 91))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 11, NotNotified = 47,Notified = 52))
+discuss <- rbind(discuss, data.frame(Date = 'Mar2017', ResultAge = 12, NotNotified = 11,Notified = 10))
+
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 1, NotNotified = 63,Notified = 4))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 2, NotNotified = 49,Notified = 33))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 3, NotNotified = 47,Notified = 36))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 4, NotNotified = 41,Notified = 44))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 5, NotNotified = 38,Notified = 74))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 6, NotNotified = 22,Notified = 42))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 7, NotNotified = 45,Notified = 77))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 8, NotNotified = 18,Notified = 23))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 9, NotNotified = 26,Notified = 42))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 10, NotNotified = 38,Notified = 39))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 11, NotNotified = 34,Notified = 64))
+discuss <- rbind(discuss, data.frame(Date = 'Jun2017', ResultAge = 12, NotNotified = 26,Notified = 39))
+
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 1, NotNotified = 96,Notified = 32))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 2, NotNotified = 68,Notified = 41))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 3, NotNotified = 96,Notified = 51))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 4, NotNotified = 85,Notified = 49))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 5, NotNotified = 91,Notified = 52))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 6, NotNotified = 91,Notified = 47))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 7, NotNotified = 78,Notified = 65))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 8, NotNotified = 82,Notified = 85))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 9, NotNotified = 55,Notified = 108))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 10, NotNotified = 62,Notified = 88))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 11, NotNotified = 69,Notified = 99))
+discuss <- rbind(discuss, data.frame(Date = 'Sep2017', ResultAge = 12, NotNotified = 45,Notified = 76))
+
+```
+
+## Plots
+
+```{r plot_}
+
+pencat_report$Proportion <- pencat_report$Vaccinated/pencat_report$Total
+pencat_report$numericDate <- as.numeric(pencat_report$Date) 
+m <- augment(loess(Proportion ~ numericDate, # loess localized regression accepts numbers, not dates
+                   data = pencat_report))
+m$Date <- pencat_report$Date # but plotly plots require, in this case, dates, not numbers!
+
+p_pencat <- pencat_report %>%
+  plot_ly(x=~Date, y=~Proportion,
+          type='scatter', mode='markers') %>%
+  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date))),
+            line = list(color = 'rgba(7,164,181,1)'),
+            showlegend = FALSE) %>%
+  add_ribbons(data = m,
+              x = ~Date,
+              ymin = ~.fitted - 1.96 * .se.fit,
+              ymax = ~.fitted + 1.96 * .se.fit,
+              line = list(color = 'rgba(7,164,181,0.05)'),
+              fillcolor = 'rgba(7,164,181,0.2)',
+              showlegend = FALSE) %>% 
+  layout(title = 'Varicella zoster vaccination
+         proportion of 70-79 year olds (PenCAT report)
+         coHealth Kensington, 2017-2018')
+
+p_pencat
+
+```
+
+```{r plot_dcp}
+
+dcp_report$numericDate <- as.numeric(dcp_report$Date)
+m <- augment(loess(Proportion ~ numericDate,
+                   data = dcp_report))
+m$Date <- dcp_report$Date
+
+p_dcp <- dcp_report %>%
+  plot_ly(x=~Date, y=~Proportion,
+          type='scatter', mode='markers') %>%
+  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date))),
+            line = list(color = 'rgba(7,164,181,1)'),
+            showlegend = FALSE) %>%
+  add_ribbons(data = m,
+              x = ~Date,
+              ymin = ~.fitted - 1.96 * .se.fit,
+              ymax = ~.fitted + 1.96 * .se.fit,
+              line = list(color = 'rgba(7,164,181,0.05)'),
+              fillcolor = 'rgba(7,164,181,0.2)',
+              showlegend = FALSE) %>% 
+  layout(title = 'Varicella zoster vaccination
+         proportion of 70-79 year olds
+         seen in each week (DCP report)
+         coHealth Kensington, 2017-2018')
+
+p_dcp
+
+```
