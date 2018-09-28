@@ -1,6 +1,6 @@
 ---
 title: "Zostavax immunization against herpes zoster, Kensington 2017-2018"
-abstract: Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Immunization against herpes zoster reduces the occurrence of the disease. This project measures the proportion of eligible patients at the Kensington site vaccinated against herpes zoster over 2017-2018. A mechanism to further increase immunization coverage is proposed. 
+abstract: Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Immunization against herpes zoster reduces the occurrence of the disease. This project measures the proportion of eligible patients at the Kensington site vaccinated against herpes zoster over 2017-2018. A mechanism to further increase immunization coverage is proposed. The techniques used in this project are generalizable to other practice quality improvement activities.
 
 author: 'David Fong'
 output: html_document
@@ -30,6 +30,8 @@ The proportion of eligible 70-79 year olds who have been immunized against Zosta
 As approximately 50% of eligible patients each week seen at the practice leave without a record of immunization, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
 
 A [Best Practice SQL script](SQLnovax) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnovax). It is proposed to identify patients at the beginning of each day for a month and continue to evaluate the proportion of eligible patients immunized against shingles.
+
+Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
 
 ### Data
 
