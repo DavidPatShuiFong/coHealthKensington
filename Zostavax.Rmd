@@ -163,15 +163,15 @@ cbindPad <- function(...){
 
 #### Proportion of active patients immunized against shingles {#bp_proportion}
 
-Calculate and plot the proportion of active patients aged 70-79 years who have a record of shingles vaccination at each time period.
+The proportion of active patients aged 70-79 years who have a record of shingles vaccination at each time period.
 
-Main data plot is extracted using [SQL code](SQLzno) in Best Practice[^3].
+Main data source is extracted using [SQL code](SQLzno) in Best Practice[^3].
 
 [^3]: Similar data is available from PenCAT, which is also plotted for comparison purposes. Accurate PenCAT data not available after June 2018, because PenCAT does not recognize varicella zoster immunization which had been migrated from one clinical software (Medical Director 3) to another (Best Practice). The clinical software migration occurred in June 2018.
 
 Proportion of patients recorded as having been immunized steadily increased from less than 15% in January 2017 to 50% in May 2017.  Since May 2017, the proportion immunized has remained steady/flat at 50%.
 
-```{r data_manipulate}
+```{r data_manipulate, include=FALSE}
 pencat_report <- pencat_report %>%
   mutate(pencat_Proportion = Vaccinated/Total) %>%
   mutate(pencat_numericDate = as.numeric(Date)) %>%
@@ -223,7 +223,6 @@ p_bp <- bp_report %>%
   layout(title = 'Varicella zoster vaccination
          proportion of 70-79 year olds (Best Practice report)
          coHealth Kensington, 2017-2018',
-         
          legend = list(x = 0.75, y = 0.5)
 )
 
