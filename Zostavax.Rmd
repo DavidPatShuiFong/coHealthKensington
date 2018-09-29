@@ -190,7 +190,7 @@ bp_report <- cbindPad(bp_report, pencat_report)
 
 ```
 
-```{r plot_bp, warning=FALSE}
+```{r plot_bp, warning=FALSE, message=FALSE}
 
 ml <- loess(Proportion ~ numericDate, data = bp_report)
 m <- augment(ml) #loess localized regression accepts numbers, not dates
@@ -226,7 +226,9 @@ p_bp <- bp_report %>%
          legend = list(x = 0.75, y = 0.5)
 )
 
+link <- api_create(p_bp, filename = 'zostavax_coverage')
 p_bp
+
 
 ```
 
@@ -236,7 +238,7 @@ Doctor's Control Panel (DCP) reports weekly immunization patient data, based on 
 
 Plot shows that by late 2017, 50% of age-eligible patients seen week had been or were vaccinated against varicella zoster.  This proportion has remained the same up to September 2017.
 
-```{r plot_dcp}
+```{r plot_dcp, warning=FALSE, message=FALSE}
 
 dcp_report$numericDate <- as.numeric(dcp_report$Date)
 m <- augment(loess(Proportion ~ numericDate,
@@ -261,6 +263,7 @@ p_dcp <- dcp_report %>%
          seen in each week (DCP report)
          coHealth Kensington, 2017-2018')
 
+link <- api_create(p_dcp, filename = 'zostavax_dcp')
 p_dcp
 
 ```
@@ -276,7 +279,7 @@ FROM BPS_Patients
 WHERE StatusText = 'Active'
 AND DOB < DateAdd(Year,-70,'20181001')
 AND DOB > DateAdd(Year,-80,'20181001')
--- age 70 to 80 years at specified ate
+-- age 70 to 80 years at specified date
 
 AND InternalID IN (SELECT InternalID 
   FROM Visits v
