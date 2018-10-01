@@ -127,6 +127,8 @@ dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/08/20'),0.53)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/08/27'),0.62)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/03'),0.46)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/10'),0.44)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/17'),0.70)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/24'),0.48)
 
 ```
 
@@ -278,8 +280,7 @@ SELECT *
 FROM BPS_Patients
 
 WHERE StatusText = 'Active'
-AND DOB < DateAdd(Year,-70,'20181001')
-AND DOB > DateAdd(Year,-80,'20181001')
+AND DOB BETWEEN DateAdd(Year,-80,'20181001') AND DateAdd(Year,-70,'20181001')
 -- age 70 to 80 years at specified date
 
 AND InternalID IN (SELECT InternalID 
@@ -291,8 +292,7 @@ AND InternalID IN (SELECT InternalID
              AS ProviderName(Name)
             ON v.DrName LIKE ProviderName.Name
             -- appointment with specified providers
-  WHERE VisitDate >= DateAdd(Year,-2,'20181001')
-  AND VisitDate < '20181001'
+  WHERE VisitDate BETWEEN DateAdd(Year,-2,'20181001') AND '20181001'
   -- visits during specified two year time period
   AND RecordStatus = 1
  
@@ -319,8 +319,7 @@ SELECT *
 FROM BPS_Patients
 
 WHERE StatusText = 'Active'
-AND DOB < DateAdd(Year,-70,GetDate())
-AND DOB > DateAdd(Year,-80,GetDate())
+AND DOB BETWEEN DateAdd(Year,-80,GetDate()) AND DateAdd(Year,-70,GetDate())
 -- current age 70 to 80 years
 
 AND InternalID IN (SELECT InternalID 
