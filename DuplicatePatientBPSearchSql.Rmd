@@ -1,0 +1,54 @@
+---
+title: "Duplicate Patient Record Search"
+author: "David Fong"
+date: "19 October 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Find 'duplicate' patient records in Best Practice
+
+This script can be used from within Best Practice's Utilities-Search tool.
+
+Matching criteria is found in the top section (e.g. *b1.dob=b2.dob*) and
+near the end (e.g. *b1.firstname=apptid.firstname*).
+
+The Only potential duplicate records listed are those where a patient has, or
+had, an appointment with a specified provider within the specified time period.
+
+
+```{sql code}
+SELECT *
+    FROM BPS_Patients AS b1
+    INNER JOIN BPS_Patients AS b2 -- joint patient 'on itself'
+    ON NOT b1.internalid = b2.internalid  -- but not the same row onto itself!
+    AND b1.dob = b2.dob           -- match on date of birth and name
+    AND b1.surname=b2.surname
+    AND b1.firstname=b2.firstname
+
+    INNER JOIN
+    (SELECT DISTINCT firstname, surname, dob
+    FROM Appointments AS appt
+    INNER JOIN (VALUES('%bhagwat%'),('%fong%'),('%ekanayake%'),('%shoesmith%'),
+            ('%plastow%'),('%samarawickrama%'),('%obeyesekere%'),('%chaves%'),
+            ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),
+            ('%grace ho%'),('%bullen%'),('%lambrou%'),('%zeigler%'),
+            ('%tyrrell%'),('%summers%')) AS providers(Name) -- list of provider names
+    ON dbo.BPSPayee(UserID) LIKE providers.Name
+    INNER JOIN BPS_Patients AS b3
+    ON appt.internalid = b3.internalid
+
+    WHERE AppointmentDate BETWEEN '20181018' AND '20181025' -- appointment date range
+    AND RecordStatus = 1          -- the patient may, or may not have, attended (yet)
+
+    ) AS apptid
+ON b1.firstname = apptid.firstname
+AND b1.surname = apptid.surname
+AND b1.dob = apptid.dob
+
+ORDER BY apptid.surname, apptid.firstname
+```
+
