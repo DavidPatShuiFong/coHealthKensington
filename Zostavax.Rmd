@@ -342,6 +342,9 @@ AND InternalID IN (SELECT InternalID
 AND InternalID NOT IN (SELECT InternalID
   FROM Immunisations 
   WHERE VaccineName LIKE '%zostavax%')
+AND InternalID NOT IN (SELECT InternalID
+  FROM Preventivehealth
+  WHERE itemid=15) -- exclude patients who have 'refused'
 
 ORDER BY surname, firstname
 ```
