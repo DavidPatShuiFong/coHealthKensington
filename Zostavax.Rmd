@@ -132,6 +132,7 @@ dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/24'),0.48)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/01'),0.57)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/08'),0.57)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/15'),0.59)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/21'),0.48)
 
 ```
 
