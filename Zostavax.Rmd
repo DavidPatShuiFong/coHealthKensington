@@ -25,7 +25,7 @@ Varicella immunization is recommended and funded by the Australian Government fo
 
 [^2]: National Immunisation Program Schedule - https://beta.health.gov.au/health-topics/immunisation/immunisation-throughout-life/national-immunisation-program-schedule
 
-The proportion of eligible 70-79 year olds who have been immunized against Zostavax has steadily increased to 50% of the target population at the Kensington site of coHealth, but [has been static from May to September 2019](#bp_proportion). Current [weekly immunization data](#dcp_proportion) has also been static at 50% since late 2018, suggesting that without additional measures the immunization proportion is unlikely to significantly improve.
+The proportion of eligible 70-79 year olds who have been immunized against Zostavax has steadily increased to 50% of the target population at the Kensington site of coHealth, but [has been static from May to September 2018](#bp_proportion). Current [weekly immunization data](#dcp_proportion) has also been static at 50% since late 2018, suggesting that without additional measures the immunization proportion is unlikely to significantly improve.
 
 As approximately 50% of eligible patients each week seen at the practice leave without a record of immunization, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
 
