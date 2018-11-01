@@ -66,7 +66,7 @@ bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/07/01'),97,192)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/08/01'),97,193)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/09/01'),97,194)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/10/01'),100,197)
-bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/10/22'),107,201)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/11/01'),115,203)
 
 pencat_report <- data.frame(Date = as.Date('2018/06/19'), Vaccinated = 98, Total = 204)
                             
