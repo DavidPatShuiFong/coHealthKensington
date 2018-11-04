@@ -291,7 +291,7 @@ AND InternalID IN (SELECT InternalID
   FROM Visits v
   INNER JOIN (VALUES('%bhagwat%'),('%fong%'),('%ekanayake%'),('%shoesmith%'), 
              ('%plastow%'),('%samarawickrama%'),('%obeyesekere%'),('%chaves%'),
-             ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),
+             ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),('%maxwell%'),
              ('%grace ho%'))
              AS ProviderName(Name)
             ON v.DrName LIKE ProviderName.Name
@@ -330,7 +330,7 @@ AND InternalID IN (SELECT InternalID
   FROM Appointments
   INNER JOIN (VALUES('%bhagwat%'),('%fong%'),('%ekanayake%'),('%shoesmith%'), 
              ('%plastow%'),('%samarawickrama%'),('%obeyesekere%'),('%chaves%'),
-             ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),
+             ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),('%maxwell%'),
              ('%grace ho%'),('%bullen%'),('%lambrou%'),('%zeigler%')) AS providers(Name)
              ON dbo.BPSPayee(UserID) LIKE providers.Name
              -- appointment with specified providers
