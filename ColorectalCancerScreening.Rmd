@@ -1,6 +1,6 @@
 ---
 title: "Colorectal cancer screening, Kensington 2018"
-abstract: Colorectal cancer is the second most common cause of cancer-related death in Australia. Biennial faecal occult blood test can reducec colorectal cancer mortality by 15Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Immunization against herpes zoster reduces the occurrence of the disease. This project measures the proportion of eligible patients at the Kensington site vaccinated against herpes zoster over 2017-2018. A mechanism to further increase immunization coverage is proposed. The techniques used in this project are generalizable to other practice quality improvement activities.
+abstract: Colorectal cancer is the second most common cause of cancer-related death in Australia. Biennial faecal occult blood test can reducec colorectal cancer mortality by 15-25%. This project measures the proportion of eligible patients at the Kensington site screened for colorectal cancer over 2017-2018. A mechanism to improve colorectal screening is proposed. The techniques used in this project are generalizable to other practice quality improvement activities.
 
 author: 'David Fong'
 output: html_document
@@ -13,13 +13,13 @@ library(broom)
 library(plotly)
 ```
 
-### Synopsis and proposal
+## Synopsis and proposal
 
 Australia has the second-highest incidence of bowel cancer in the world. Each year around 17,000 Australians are diagnosed with bowel cancer. About 1 in 19 men and 1 in 28 women will develop bowel cancer before the age of 75. Bowel cancer making is the second most common cause of cancer-related death in Australia after lung cancer. If found early, 9 out of 10 cases of bowel cancer can be successfully treated[^1].
 
 [^1]: http://cancerscreening.gov.au/internet/screening/publishing.nsf/Content/nbcsp-fact-sheet
 
-Biennial faecal occult blood test (FOBT) can reduce colorectal cancer (CRC) mortality by 15-25%[^2][^3]. Organised screening by iFOBT is recommended for the asymptomatic (average risk) population from 50 years of age every two years until 74 years of age[^4].  
+Biennial faecal occult blood test (FOBT) can reduce colorectal cancer (CRC) mortality by 15-25%[^2] [^3]. Organised screening by iFOBT is recommended for the asymptomatic (average risk) population from 50 years of age every two years until 74 years of age[^4].  
 
 [^2]: Hewitson P, Glasziou PP, Irwig L, Towler B, Watson E. Screening for colorectal cancer using the faecal occult blood test, Hemoccult. Cochrane Database Syst Rev 2007;1:CD001216.
 
@@ -38,7 +38,15 @@ Despite the effectiveness of faecal occult blood testing in early detection and 
 
 The proportion of eligible 50-75 year olds who had a recorded colorectal cancer screening, either faecal occult blood testing or colonoscopy, during the preceding two years has increased gradually at the Kensington site of coHealth [from 23% in January 2017 to 25% in October 2018](#bp_proportion). 
 
-Approximately 75% of eligible patients each week seen at the practice leave without a record of immunization, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
+Approximately 75% of eligible patients each week seen at the practice leave without a record of having been screened for colorectal cancer, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
+
+### Potential benefit
+
+For every 10000 patients screened annually, it is estimated that 500 will be found to have occult bleeding, 15 to 25 will have colorectal cancer, 100 will have an advanced adenoma and 100 to 150 a less advanced adenoma[^3]. Each year 3 to 5 deaths from bowel cancer will be prevented and 36 to 60 life years will be saved.
+
+In the Kensington clinic context, which has about 850 eligible patients, an absolute 20% improvement in screening would result in an extra 85 patients being screened annually. Maintained for ten years this would result in approximately 10 advanced adenomas detected, 3 to 5 life-years saved and 0.4 deaths prevented.
+
+### Method
 
 A [Best Practice SQL script](SQLnotyetfobt) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnotyetfobt). It is proposed to identify patients at the beginning of each day for a month and continue to evaluate the proportion of eligible patients immunized against shingles.
 
@@ -115,9 +123,9 @@ cbindPad <- function(...){
 
 The proportion of active patients aged 50-75 years who have a record of colorectal screening during the previous two years (currently, 'two years' applies both to faecal occult blood scrrening and colonoscopy).
 
-Main data source is extracted using [SQL code](SQLyfo) in Best Practice[^3].
+Main data source is extracted using [SQL code](SQLyfo) in Best Practice[^8].
 
-[^3]: Similar data is available from PenCAT, which is also plotted for comparison purposes. PenCAT screening rates are lower, probably because PenCAT's search tools seems to only search for results in 'Investigation rerports', when many results have been filed in 'Correspondence'. 
+[^8]: Similar data is available from PenCAT, which is also plotted for comparison purposes. PenCAT screening rates are lower, probably because PenCAT's search tools seems to only search for results in 'Investigation rerports', when many results have been filed in 'Correspondence'. 
 
 Proportion of patients recorded as having been screened within the previous two years has been fairly constant from January 2017 to October 2017, perhaps slightly increasing from about 23% to 25%.
 
@@ -170,9 +178,10 @@ p_bp <- bp_report %>%
               line = list(color = 'rgba(7,164,181,0.05)'),
               fillcolor = 'rgba(7,164,181,0.2)',
               showlegend = FALSE) %>% 
-  layout(title = 'Varicella zoster vaccination
-         proportion of 70-79 year olds (Best Practice report)
+  layout(title = 'Colorectal Cancer Screening
+         proportion of 50-75 year olds (Best Practice report)
          coHealth Kensington, 2017-2018',
+         yaxis = list(range=c(0.05,0.35)),
          legend = list(x = 0.75, y = 0.5)
 )
 
