@@ -176,7 +176,7 @@ p_bp <- bp_report %>%
          legend = list(x = 0.75, y = 0.5)
 )
 
-link <- api_create(p_bp, filename = 'zostavax_coverage')
+link <- api_create(p_bp, filename = 'fobt_coverage')
 p_bp
 
 
