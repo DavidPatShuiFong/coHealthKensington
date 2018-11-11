@@ -148,7 +148,7 @@ bp_report <- cbindPad(bp_report, pencat_report)
 
 ```
 
-```{r plot_bp, warning=FALSE, message=FALSE, include=FALSE}
+```{r plot_bp, warning=FALSE, message=FALSE, echo=FALSE}
 
 ml <- loess(Proportion ~ numericDate, data = bp_report)
 m <- augment(ml) #loess localized regression accepts numbers, not dates
