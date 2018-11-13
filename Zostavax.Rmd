@@ -199,7 +199,7 @@ bp_report <- cbindPad(bp_report, pencat_report)
 
 ```
 
-```{r plot_bp, warning=FALSE, message=FALSE}
+```{r plot_bp, warning=FALSE, message=FALSE, echo=FALSE}
 
 ml <- loess(Proportion ~ numericDate, data = bp_report)
 m <- augment(ml) #loess localized regression accepts numbers, not dates
@@ -247,7 +247,7 @@ Doctor's Control Panel (DCP) reports weekly immunization patient data, based on 
 
 Plot shows that by late 2017, 50% of age-eligible patients seen week had been or were vaccinated against varicella zoster.  This proportion has remained the same up to September 2017.
 
-```{r plot_dcp, warning=FALSE, message=FALSE}
+```{r plot_dcp, warning=FALSE, message=FALSE, echo=FALSE}
 
 dcp_report$numericDate <- as.numeric(dcp_report$Date)
 m <- augment(loess(Proportion ~ numericDate,
