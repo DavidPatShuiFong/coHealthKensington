@@ -48,7 +48,7 @@ In the Kensington clinic context, which has about 850 eligible patients, an abso
 
 ### Method
 
-A [Best Practice SQL script](SQLnotyetfobt) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnotyetfobt). It is proposed to identify patients at the beginning of each day for a month and continue to evaluate the proportion of eligible patients immunized against shingles.
+A [Best Practice SQL script](SQLnotyetfobt) which identifies non-screened eligible patients is [presented at the end of this document](SQLnotyetfobt). It is proposed to identify patients at the beginning of each day for a month and continue to evaluate the proportion of eligible patients appropriately screened for colorectal cancer.
 
 Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
 
