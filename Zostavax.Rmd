@@ -206,7 +206,15 @@ bp_report <- bp_report %>%
   mutate(Proportion = Vaccinated/Total) %>%
   mutate(numericDate = as.numeric(Date))
 
+bp_other_report <- bp_other_report %>%
+  mutate(other_Proportion = Vaccinated/Total) %>%
+  mutate(other_numericDate = as.numeric(Date)) %>%
+  rename(other_Date = Date) %>%
+  rename(other_Vaccinated = Vaccinated) %>%
+  rename(other_Total = Total)
+
 bp_report <- cbindPad(bp_report, pencat_report)
+bp_report <- cbindPad(bp_report, bp_other_report)
 # adds pencat_report to bp_report
 # uses defined function cbindPad (defined in previous code section)
 # note that rows originating from pencat_report are not 'aligned'
@@ -222,20 +230,31 @@ m$Date <- bp_report$Date # but plotly plots require, in this case, dates, not nu
 
 ml_p <- loess(pencat_Proportion ~ pencat_numericDate, data = bp_report)
 m_p <- augment(ml_p)
-m_p$Date <- bp_report$pencat_Date[!is.na(bp_report$pencat_Date)]
+m_p$Date <- bp_report$other_Date[!is.na(bp_report$pencat_Date)]
+
+ml_o <- loess(other_Proportion ~ other_numericDate, data = bp_report)
+m_o <- augment(ml_o)
+m_o$other_Date <- bp_report$other_Date[!is.na(bp_report$other_Date)]
+m_o$Proportion <- bp_report$other_Proportion[!is.na(bp_report$other_Proportion)]
 
 p_bp <- bp_report %>%
   plot_ly(x = ~Date, y = ~Proportion,
-          name = 'BP SQL data',
+          name = 'BP Kensington',
           type = 'scatter', mode = 'markers') %>%
   add_lines(y = ~fitted(ml), x = ~Date,
             line = list(color = 'rgba(7,164,181,1)'),
             showlegend = FALSE) %>%
   add_trace(x=~pencat_Date, y = ~pencat_Proportion,
-            name = 'PenCAT data', type = 'scatter', mode = 'markers',
+            name = 'PenCAT Kensington', type = 'scatter', mode = 'markers',
             marker = list(color = 'rgba(164,164,164,.5)')) %>%
   add_lines(y = ~fitted(ml_p), x = ~pencat_Date[!is.na(pencat_Date)],
             line = list(color = 'rgba(164,164,164,.5)', dash = 'dash'),
+            showlegend = FALSE) %>%
+  add_trace(x=~other_Date, y = ~other_Proportion,
+            name = 'Other coHealth', type = 'scatter', mode = 'markers',
+            marker = list(color = 'rgba(200,82,82,.5)')) %>%
+  add_lines(y = ~fitted(ml_o), x = ~other_Date[!is.na(other_Date)],
+            line = list(color = 'rgba(200,82,82,.5)', dash = 'dash'),
             showlegend = FALSE) %>%
   add_ribbons(data = m,
               x = ~Date,
@@ -243,11 +262,18 @@ p_bp <- bp_report %>%
               ymax = ~.fitted + 1.96 * .se.fit,
               line = list(color = 'rgba(7,164,181,0.05)'),
               fillcolor = 'rgba(7,164,181,0.2)',
-              showlegend = FALSE) %>% 
+              showlegend = FALSE) %>%
+  add_ribbons(data = m_o,
+              x = ~other_Date[!is.na(other_Date)],
+              ymin = ~.fitted - 1.96 * .se.fit,
+              ymax = ~.fitted + 1.96 * .se.fit,
+              line = list(color = 'rgba(200,82,82,0.05)'),
+              fillcolor = 'rgba(200,82,82,0.2)',
+              showlegend = FALSE) %>%
   layout(title = 'Varicella zoster vaccination
          proportion of 70-79 year olds (Best Practice report)
          coHealth Kensington, 2017-2018',
-         legend = list(x = 0.75, y = 0.5)
+         legend = list(x = 0.65, y = 0.3)
 )
 
 link <- api_create(p_bp, filename = 'zostavax_coverage')
