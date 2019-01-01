@@ -37,7 +37,7 @@ Modified variations of these tools can be used to identify patients for whom oth
 
 Best Practice (up to September 2018) and PenCAT (up to June 2018) provide data of proportion of 'active' patients immunized against herpes zoster. Patients are defined as 'active' if they have three contacts over two years. Some 'contacts' may be trivial, e.g. correspondence and telephone contacts with third parties.
 
-Weekly Doctor's Control panel (DCP) data, August 2017 to September 2018, provides data of proportion of contacted patients immunized against herpes zoster. DCP data is weekly contact data, where a contact is defined as where a billing has occurred.
+Weekly Doctor's Control panel (DCP) data, August 2017 to December 2018, provides data of proportion of contacted patients immunized against herpes zoster. DCP data is weekly contact data, where a contact is defined as where a billing has occurred.
 
 Full data and analysis R-code can be found on [Github](https://github.com/DavidPatShuiFong/coHealthKensington/blob/master/Zostavax.Rmd).
 
@@ -67,6 +67,7 @@ bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/08/01'),97,193)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/09/01'),97,194)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/10/01'),100,197)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/11/01'),115,203)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/12/01'),122,204)
 
 pencat_report <- data.frame(Date = as.Date('2018/06/19'), Vaccinated = 98, Total = 204)
                             
@@ -139,7 +140,8 @@ dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/11/12'),0.72)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/11/19'),0.76)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/11/26'),0.62)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/12/02'),0.77)
-
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/12/09'),0.71)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/12/16'),0.70)
 ```
 
 ### Plots
@@ -182,7 +184,7 @@ Main data source is extracted using [SQL code](SQLzno) in Best Practice[^3].
 
 [^3]: Similar data is available from PenCAT, which is also plotted for comparison purposes. Accurate PenCAT data not available after June 2018, because PenCAT does not recognize varicella zoster immunization which had been migrated from one clinical software (Medical Director 3) to another (Best Practice). The clinical software migration occurred in June 2018.
 
-Proportion of patients recorded as having been immunized steadily increased from less than 15% in January 2017 to 50% in May 2017.  Since May 2017, the proportion immunized has remained steady/flat at 50%.
+Proportion of patients recorded as having been immunized steadily increased from less than 15% in January 2017 to 50% in May 2018.  Since May 2018, the proportion immunized remained steady/flat at 50% until September 2018.
 
 ```{r data_manipulate, include=FALSE}
 pencat_report <- pencat_report %>%
@@ -249,7 +251,7 @@ p_bp
 
 Doctor's Control Panel (DCP) reports weekly immunization patient data, based on age-eligible (70-79 years old) patients seen each week.
 
-Plot shows that by late 2017, 50% of age-eligible patients seen week had been or were vaccinated against varicella zoster.  This proportion has remained the same up to September 2017.
+Plot shows that by late 2017, 50% of age-eligible patients seen week had been or were vaccinated against varicella zoster.  This proportion has remained the same up to September 2018.
 
 ```{r plot_dcp, warning=FALSE, message=FALSE, echo=FALSE}
 
