@@ -29,7 +29,7 @@ The proportion of eligible 70-79 year olds who have been immunized against Zosta
 
 As approximately 50% of eligible patients each week seen at the practice leave without a record of immunization, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
 
-A [Best Practice SQL script](SQLnovax) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnovax). It is proposed to identify patients at the beginning of each day for a month and continue to evaluate the proportion of eligible patients immunized against shingles.
+A [Best Practice SQL script](SQLnovax) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnovax). It was proposed to identify patients at the beginning of each day for a month and continue to evaluate the proportion of eligible patients immunized against shingles. This was done from 27th September 2018 to 9th November 2018 inclusive.
 
 Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
 
