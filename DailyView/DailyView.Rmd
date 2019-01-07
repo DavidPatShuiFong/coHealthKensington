@@ -1,0 +1,206 @@
+---
+title: "Daily View"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    
+runtime: shiny
+
+---
+
+```{r global, setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+
+library(dbplyr) # database interaction for dplyr
+library(DBI)    # R database interface
+library(odbc)   # the database backend handler for Microsoft SQL Server
+library(pool)   # database pool
+
+library(base64enc)  # simple obfuscation for passwords
+library(DT)         # pretty-print tables/tibbles
+library(lubridate)  # time handling library
+
+filename <- 'BestPracticeSQL_password.txt'
+dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
+  # obfuscated, NOT ENCRYPTED, password
+  # password file created with command like
+  #    cat(base64encode(charToRaw('mypassword')), file="BestPracticeSQL_password.txt")
+
+pool <- dbPool(odbc::odbc(), driver = "SQL Server", server = "127.0.0.1\\BPSINSTANCE", 
+                      database = "BPSSamples", uid = "bpsrawdata", pwd = dbpassword)
+
+practice_locations <- as.tibble(read.csv('PracticeLocations.csv'))
+  # two columns : 'Fullname' and 'Location'
+
+users <- pool %>% 
+  tbl(in_schema('dbo', 'BPS_Users')) %>% 
+  select(c('UserID', 'Surname', 'Firstname', 'LocationName', 'Title')) %>%
+  collect() %>%     # forces database to be read (instead of subsequent 'lazy' read)
+  mutate(Title = trimws(Title), Firstname = trimws(Firstname), Surname = trimws(Surname)) %>%
+  mutate(Fullname = paste(Title, Firstname, Surname, sep = ' ')) %>%
+  left_join(practice_locations) %>%   # add practice locations imported from external CSV file
+  filter(!is.na(Location))            # only include users which have a defined practice location
+
+locations <- rbind(tibble(Location = 'All'), practice_locations %>% select(c('Location')) %>% unique()) 
+  # add 'All' to (unique) locations list
+
+patients <- pool %>%
+  tbl(in_schema('dbo', 'BPS_Patients'))
+
+investigations <- pool %>%
+  tbl(in_schema('dbo', 'BPS_Investigations')) %>%
+  select(c('InternalID', 'Collected', 'TestName'))
+
+correspondenceIn <- pool %>%
+  tbl(in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
+  select(c('InternalID', 'CorrespondenceDate', 'Subject', 'Detail'))
+
+reportValues <- pool %>%
+  tbl(in_schema('dbo', 'BPS_ReportValues')) %>%
+  select(c('InternalID', 'ReportDate', 'ResultName', 'LoincCode'))
+
+```
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+### Appointment Date Range
+
+```{r}
+
+wellPanel(
+  dateInput('date1', label = 'From:', format='DD dd/M/yyyy', min = Sys.Date()-4000, max = Sys.Date()+180),
+  dateInput('date2', label = 'To:', format='DD dd/M/yyyy', min = Sys.Date()-4000, max = Sys.Date()+180),
+  actionButton('update_date', 'Update', icon('refresh'), class = 'btn btn-primary'),
+  helpText("After adjusting the date range, click the 'Update' button",
+           "to adjust the viewed appointment date range")
+)
+```
+
+### Clinician list
+
+```{r}
+wellPanel(
+  selectInput('location', 'Practice location', locations, selected = 'All'),
+  uiOutput('clinicianList')
+)
+
+```
+
+```{r}
+# 'helper' functions for input panel
+
+# only adjust appointment view after dates are 'submitted'
+date_a <- eventReactive(input$update_date, {
+  input$date1
+})
+date_b <- eventReactive(input$update_date, {
+  input$date2
+})
+
+# list of clinicians shown depends on 'practice location' chosen
+output$clinicianList <- renderUI({
+  choice_list <- if (input$location == 'All') users$Fullname else users[users$Location == input$location,]$Fullname
+    # note that 'ifelse' only returns result in the same 'shape' as the comparison statement
+  chosen_list <- input$clinicians # retain previous selections
+  checkboxGroupInput('clinicians', 'Clinician', choices = choice_list, selected = chosen_list)
+})
+
+```
+
+```{r}
+# 'helper' functions for calculation
+
+calc_age <- function(birthDate, refDate = Sys.Date()) {
+  # Calculate age at a given reference date
+  # Create an interval between the date of birth and the enrollment date; 
+  # intervals are specific to the two dates. Periods give the actual length
+  # of time between those dates, so convert to period and extract the year.
+  # written by 'mmparker' https://gist.github.com/mmparker/7254445
+
+  period <- as.period(interval(birthDate, refDate),                        
+                      unit = "year")
+  period$year
+}
+```
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+### Measure
+
+Bowel cancer screening
+
+```{r}
+
+screen_fobt_list <- reactive({
+  appointments() %>%
+    left_join(patients, by = 'InternalID', copy = TRUE) %>%   # need patients database to access date-of-birth
+    select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'DOB')) %>% 
+    mutate(DOB = substr(DOB,1,10)) %>%
+    mutate(Age = calc_age(DOB)) %>%
+    filter(DOB<=ymd(Sys.Date())-years(50) & DOB>ymd(Sys.Date())-years(75)) # from age 50 to 75 years inclusive
+})
+
+screen_fobt_ix <- reactive({
+  screen_fobt_list() %>%
+    left_join(investigations, by = 'InternalID', copy = TRUE)
+})
+
+renderDT({datatable(
+  screen_fobt_list()
+)})
+
+```
+
+### Billing
+
+```{r}
+
+renderDT({datatable(
+  screen_fobt_ix()
+)})
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Appointments
+
+```{r}
+
+hrmin <- function(t) {
+  # converts seconds to a 'time' starting from midnight
+  # t : value in seconds
+  # returns 24-hour time of form '14:15' (hh:mm)
+  td <- seconds_to_period(t)
+  sprintf('%02d:%02d', td@hour, td@minute)
+}
+
+appointments <- reactive({
+  validate (
+    need(input$clinicians, 'Choose at least one clinician appointment to view'),
+    need(date_a(), 'Invalid date range'),
+    need(date_b(), 'Invalid date range')
+  )
+  pool %>% 
+    tbl(in_schema('dbo', 'BPS_Appointments')) %>%
+    filter(AppointmentDate >= local(date_a()) & AppointmentDate <= local(date_b())) %>%
+    filter(Provider %in% input$clinicians) %>% 
+      # note that dbplyr does not evaluate manipulated expressions, hence the use of 'local()'
+      # a database filter on an empty list after %in% will result in an error message
+    select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status')) %>%
+    collect() %>% # force read of database
+    mutate(AppointmentTime = hrmin(AppointmentTime), AppointmentDate = substr(AppointmentDate,1,10)) %>%
+    arrange(AppointmentDate, AppointmentTime)
+})
+
+renderDT({datatable(
+  appointments() %>%
+    select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status'))
+  )})
+
+```
