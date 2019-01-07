@@ -3,7 +3,7 @@ title: "Daily View"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
-    vertical_layout: scroll
+    vertical_layout: fill
     
 runtime: shiny
 
@@ -129,9 +129,7 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
 Row {.tabset}
 -----------------------------------------------------------------------
 
-### Measure
-
-Bowel cancer screening
+### Bowel Cancer Screening
 
 ```{r}
 
@@ -150,7 +148,8 @@ screen_fobt_ix <- reactive({
 })
 
 renderDT({datatable(
-  screen_fobt_list()
+    screen_fobt_list(), 
+    fillContainer = TRUE
 )})
 
 ```
@@ -160,7 +159,8 @@ renderDT({datatable(
 ```{r}
 
 renderDT({datatable(
-  screen_fobt_ix()
+  screen_fobt_ix(), 
+  fillContainer = TRUE
 )})
 
 ```
@@ -200,7 +200,8 @@ appointments <- reactive({
 
 renderDT({datatable(
   appointments() %>%
-    select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status'))
+    select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status')),
+  fillContainer = TRUE
   )})
 
 ```
