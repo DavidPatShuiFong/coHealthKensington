@@ -129,9 +129,19 @@ calc_age <- function(birthDate, refDate = Sys.Date()) {
 Row {.tabset}
 -----------------------------------------------------------------------
 
-### Bowel Cancer Screening
+### Target Age
 
 ```{r}
+
+bowel_cancer_screen_terms <- c("(VALUES('%FOB%'), ('%OCCULT%'), ('%FAECAL HUMAN HAEMOGLOBIN%'),
+                               ('%OCB NATIONAL SCREENING%'), ('%FHB%'), ('%FAECAL BLOOD%'),
+                               ('%FAECAL IMMUNOCHEMICAL TEST%'), ('%FAECAL HAEMOGLOBIN%'),
+                               ('%COLONOSCOPY%'), ('%COLONOSCOPE%')) AS tests(fobtnames)")
+
+fobt_investigation_query <- paste('SELECT InternalID, Collected, TestName FROM dbo.BPS_Investigations
+                                    INNER JOIN', bowel_cancer_screen_terms,
+                                    'ON Testname LIKE tests.fobtnames')
+    # SQL code to find investigations which could be bowel cancer screening items
 
 screen_fobt_list <- reactive({
   appointments() %>%
@@ -143,8 +153,9 @@ screen_fobt_list <- reactive({
 })
 
 screen_fobt_ix <- reactive({
-  screen_fobt_list() %>%
-    left_join(investigations, by = 'InternalID', copy = TRUE)
+  left_join(screen_fobt_list(),
+            dbGetQuery(pool, fobt_investigation_query),
+            by = 'InternalID', copy = TRUE)
 })
 
 renderDT({datatable(
@@ -165,8 +176,6 @@ renderDT({datatable(
 
 ```
 
-Row
------------------------------------------------------------------------
 
 ### Appointments
 
