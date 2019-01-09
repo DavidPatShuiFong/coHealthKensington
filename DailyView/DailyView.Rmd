@@ -49,9 +49,12 @@ locations <- rbind(tibble(Location = 'All'), practice_locations %>% select(c('Lo
 patients <- pool %>%
   tbl(in_schema('dbo', 'BPS_Patients'))
 
-investigations <- pool %>%
+investigations <- pool %>%            
   tbl(in_schema('dbo', 'BPS_Investigations')) %>%
   select(c('InternalID', 'Collected', 'TestName'))
+  # as of Jan/2019, the odbc engine for MSSQL can't handle the full ('Select *') Investigations table
+  # due to some type of bug/standards non-compliance. also can handle the History table. need to
+  # 'Select' out just a few columns.
 
 correspondenceIn <- pool %>%
   tbl(in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
@@ -140,22 +143,55 @@ bowel_cancer_screen_terms <- c("(VALUES('%FOB%'), ('%OCCULT%'), ('%FAECAL HUMAN 
 
 fobt_investigation_query <- paste('SELECT InternalID, Collected, TestName FROM dbo.BPS_Investigations
                                     INNER JOIN', bowel_cancer_screen_terms,
-                                    'ON Testname LIKE tests.fobtnames')
+                                    'ON TestName LIKE tests.fobtnames')
     # SQL code to find investigations which could be bowel cancer screening items
+
+fobt_letter_subject_query <- paste('SELECT InternalID, CorrespondenceDate, Subject FROM dbo.BPS_CorrespondenceIn
+                                   INNER JOIN', bowel_cancer_screen_terms,
+                                  'ON Subject LIKE tests.fobtnames')
+
+fobt_letter_detail_query <- paste('SELECT InternalID, CorrespondenceDate, Detail FROM dbo.BPS_CorrespondenceIn
+                                  INNER JOIN', bowel_cancer_screen_terms,
+                                  'ON Detail LIKE tests.fobtnames')
+
+fobt_result_query <- paste("SELECT InternalID, ReportDate, ResultName FROM dbo.BPS_ReportValues 
+                           WHERE LoincCode IN ('2335-8','27396-1','14563-1','14564-9','14565-6',
+                         	                     '12503-9','12504-7','27401-9','27925-7','27926-5',
+	                                             '57905-2','56490-6','56491-4','29771-3')")
 
 screen_fobt_list <- reactive({
   appointments() %>%
     left_join(patients, by = 'InternalID', copy = TRUE) %>%   # need patients database to access date-of-birth
     select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'DOB')) %>% 
-    mutate(DOB = substr(DOB,1,10)) %>%
+    mutate(DOB = substr(DOB, 1, 10)) %>%
     mutate(Age = calc_age(DOB)) %>%
     filter(DOB<=ymd(Sys.Date())-years(50) & DOB>ymd(Sys.Date())-years(75)) # from age 50 to 75 years inclusive
 })
 
 screen_fobt_ix <- reactive({
   left_join(screen_fobt_list(),
-            dbGetQuery(pool, fobt_investigation_query),
-            by = 'InternalID', copy = TRUE)
+            bind_rows(inner_join(screen_fobt_list(),
+                                 dbGetQuery(pool, fobt_investigation_query) %>% collect() %>%
+                                   rename(TestDate = Collected),
+                                 by = 'InternalID'),
+                      inner_join(screen_fobt_list(),
+                                 dbGetQuery(pool, fobt_letter_subject_query) %>% collect() %>%
+                                   rename(TestDate = CorrespondenceDate, TestName = Subject),
+                                 by = 'InternalID'),
+                      inner_join(screen_fobt_list(),
+                                 dbGetQuery(pool, fobt_letter_detail_query) %>% collect() %>%
+                                   rename(TestDate = CorrespondenceDate, TestName = Detail),
+                                 by = 'InternalID'),
+                      inner_join(screen_fobt_list(),
+                                 dbGetQuery(pool, fobt_result_query) %>% collect() %>%
+                                   rename(TestDate = ReportDate, TestName = ResultName),
+                                 by = 'InternalID')
+                      ) %>%
+              mutate(TestDate = as.Date(substr(TestDate, 1, 10))) %>%  # remove time from date
+              group_by(InternalID) %>% # group by patient ID (need most recent investigation for each patient)
+              filter(TestDate == max(TestDate, na.rm = TRUE) # only keep the latest(/recent) dated investigation
+           )
+  )
 })
 
 renderDT({datatable(
