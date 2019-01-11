@@ -2,7 +2,7 @@
 title: "Zostavax immunization against herpes zoster, Kensington 2017-2018"
 abstract: Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Immunization against herpes zoster reduces the occurrence of the disease. This project measures the proportion of eligible patients at the Kensington site vaccinated against herpes zoster over 2017-2018. A mechanism to further increase immunization coverage is proposed. The techniques used in this project are generalizable to other practice quality improvement activities.
 
-author: 'David Fong'
+author: '[David Fong](http://www.davidfong.info)'
 output: html_document
 ---
 
