@@ -1,9 +1,12 @@
 ---
 title: "Daily View"
+author: "David Fong"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
     vertical_layout: fill
+    includes:
+      in_header: 'semantic_ui.html'
     
 runtime: shiny
 
@@ -22,6 +25,8 @@ library(base64enc)  # simple obfuscation for passwords
 library(DT)         # pretty-print tables/tibbles
 library(lubridate)  # time handling library
 
+# database setup
+
 filename <- 'BestPracticeSQL_password.txt'
 dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
   # obfuscated, NOT ENCRYPTED, password
@@ -33,6 +38,8 @@ pool <- dbPool(odbc::odbc(), driver = "SQL Server", server = "127.0.0.1\\BPSINST
 
 practice_locations <- as.tibble(read.csv('PracticeLocations.csv'))
   # two columns : 'Fullname' and 'Location'
+
+# database table setup
 
 users <- pool %>% 
   tbl(in_schema('dbo', 'BPS_Users')) %>% 
@@ -63,6 +70,21 @@ correspondenceIn <- pool %>%
 reportValues <- pool %>%
   tbl(in_schema('dbo', 'BPS_ReportValues')) %>%
   select(c('InternalID', 'ReportDate', 'ResultName', 'LoincCode'))
+
+invoices <- pool %>%
+  tbl(in_schema('dbo', 'INVOICES')) %>%
+  select(c('InternalID', 'INVOICEID', 'INVOICEDATE'))
+
+services <- pool %>%
+  tbl(in_schema('dbo', 'BPS_SERVICES'))
+
+# function setup
+
+# fomantic (semantic.ui) string functions
+
+green_tag_label <- function(content) {
+  paste('<span class="huge green positive ui tag label">', toString(content), '</span>', sep = "")
+}
 
 ```
 
@@ -189,15 +211,26 @@ screen_fobt_ix <- reactive({
                       ) %>%
               mutate(TestDate = as.Date(substr(TestDate, 1, 10))) %>%  # remove time from date
               group_by(InternalID) %>% # group by patient ID (need most recent investigation for each patient)
-              filter(TestDate == max(TestDate, na.rm = TRUE) # only keep the latest(/recent) dated investigation
+              filter(TestDate == max(TestDate, na.rm = TRUE)  # only keep the latest(/recent) dated investigation
            )
   )
 })
 
-renderDT({datatable(
-    screen_fobt_list(), 
-    fillContainer = TRUE
-)})
+renderDT({datatable(screen_fobt_ix() %>%
+                      mutate(OutOfDateTest = case_when(is.na(TestDate) ~ 0, # if no date (no detected test)
+                                                       TestDate<(Sys.Date()-730) ~ 1,  # 1 if old
+                                                       TRUE ~ 2)),                    # 2 if up-to-date
+                    options=list(columnDefs = list(list(visible=FALSE,  # very clunky way to hide 'OutOfDate' column
+                                                        targets=c(length(names(screen_fobt_ix()))+1)))),
+                    fillContainer = TRUE) %>%
+    formatStyle(
+      columns = 'TestDate',
+      valueColumns = 'OutOfDateTest',       # unfortunately, datatables cannot compare dates directly for styling
+      color = styleEqual(c(0, 1, 2), c('red', 'red', 'black')),
+      backgroundColor = styleEqual(c(0, 1, 2), c('red', 'yellow', 'green'))
+    )
+})
+
 
 ```
 
@@ -205,10 +238,32 @@ renderDT({datatable(
 
 ```{r}
 
-renderDT({datatable(
-  screen_fobt_ix(), 
-  fillContainer = TRUE
-)})
+# collects ALL billings for patients who have displayed appointments
+appointments_billings <- reactive({
+  appointments() %>%
+    left_join(services, by = c('InternalID' = 'INTERNALID'), copy=TRUE) %>%
+    collect() %>%
+    mutate(SERVICEDATE = as.Date(substr(SERVICEDATE, 1, 10)))
+  })
+
+# filter to billings which are done on the same day as displayed appointments
+appointments_billings_sameday <- reactive({
+  appointments_billings() %>%
+    filter(SERVICEDATE == AppointmentDate) %>%    # billings done on the same day as displayed appointments
+    select(c('InternalID', 'AppointmentDate', 'MBSITEM')) %>%
+    mutate(MBSITEM = paste('<span class="huge green positive ui tag label">', MBSITEM, '</span>', sep = "")) %>%
+      # change MBSITEMS into fomantic/semantic tags
+    group_by(InternalID, AppointmentDate) %>%     # gathers item numbers on the same day into a single row
+    summarise(Billings = toString(MBSITEM)) %>%
+    ungroup()
+  })
+
+renderDT({datatable(appointments() %>%
+                      left_join(appointments_billings_sameday(), by = c('InternalID', 'AppointmentDate')) %>%
+                      select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status', 'Billings')),
+                    escape = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE), # only interpret HTML for last column
+                    fillContainer = TRUE)
+  })
 
 ```
 
