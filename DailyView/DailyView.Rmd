@@ -82,8 +82,9 @@ services <- pool %>%
 
 # fomantic (semantic.ui) string functions
 
-green_tag_label <- function(content) {
-  paste('<span class="huge green positive ui tag label">', toString(content), '</span>', sep = "")
+semantic_tag <- function(tag, colour="") {
+  paste0('<span class="huge ', colour, ' ui tag label">', tag, '</span>', sep = "") 
+  # paste0 is vectorized version of 'paste'
 }
 
 ```
@@ -251,10 +252,10 @@ appointments_billings_sameday <- reactive({
   appointments_billings() %>%
     filter(SERVICEDATE == AppointmentDate) %>%    # billings done on the same day as displayed appointments
     select(c('InternalID', 'AppointmentDate', 'MBSITEM')) %>%
-    mutate(MBSITEM = paste('<span class="huge green positive ui tag label">', MBSITEM, '</span>', sep = "")) %>%
+    mutate(MBSITEM = semantic_tag(MBSITEM, colour = 'green')) %>%
       # change MBSITEMS into fomantic/semantic tags
     group_by(InternalID, AppointmentDate) %>%     # gathers item numbers on the same day into a single row
-    summarise(Billings = toString(MBSITEM)) %>%
+    summarise(Billings = paste(MBSITEM, collapse = "")) %>%
     ungroup()
   })
 
