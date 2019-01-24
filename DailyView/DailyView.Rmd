@@ -82,8 +82,35 @@ services <- pool %>%
 
 # fomantic (semantic.ui) string functions
 
-semantic_tag <- function(tag, colour="") {
-  paste0('<span class="huge ', colour, ' ui tag label">', tag, '</span>', sep = "") 
+semantic_tag <- function(tag, colour="", popuptext = NA) {
+  # returns a vector of tags. user-defined colour and popuptext (tooltip)
+  # note that 'data-variation' is only available in the fomantic version of semantic.ui
+  # as of writing, semantic.ui does not allow variation in text-size of javascript-free tags
+  paste0('<span class="huge ', colour, ' ui tag label">',
+         ifelse(!is.na(popuptext),
+                paste0('<span data-tooltip = "',
+                       popuptext,
+                       '" data-variation = "wide huge" data-position = "left center">', sep=""),
+                ''),
+         tag,
+         ifelse(!is.na(popuptext), '</span>', ''),
+         '</span>', sep = "") 
+  # paste0 is vectorized version of 'paste'
+}
+
+semantic_button <- function(button, colour="", popuptext = NA) {
+  # returns a vector of buttons. user-defined colour and popuptext (tooltip)
+  # note that 'data-variation' is only available in the fomantic version of semantic.ui
+  # as of writing, semantic.ui does not allow variation in text-size of javascript-free tags
+  paste0('<span class="huge ', colour, ' ui button">',
+         ifelse(!is.na(popuptext),
+                paste0('<span data-tooltip = "',
+                       popuptext,
+                       '" data-variation = "wide huge" data-position = "left center">', sep=""),
+                ''),
+         button,
+         ifelse(!is.na(popuptext), '</span>', ''),
+         '</span>', sep = "") 
   # paste0 is vectorized version of 'paste'
 }
 
@@ -212,14 +239,13 @@ screen_fobt_ix <- reactive({
                       ) %>%
               mutate(TestDate = as.Date(substr(TestDate, 1, 10))) %>%  # remove time from date
               group_by(InternalID) %>% # group by patient ID (need most recent investigation for each patient)
-              filter(TestDate == max(TestDate, na.rm = TRUE)  # only keep the latest(/recent) dated investigation
-           )
+              filter(TestDate == max(TestDate, na.rm = TRUE))  # only keep the latest(/recent) dated investigation
   )
 })
 
 renderDT({datatable(screen_fobt_ix() %>%
                       mutate(OutOfDateTest = case_when(is.na(TestDate) ~ 0, # if no date (no detected test)
-                                                       TestDate<(Sys.Date()-730) ~ 1,  # 1 if old
+                                                       interval(TestDate, AppointmentDate)>years(2) ~ 1,  # 1 if old
                                                        TRUE ~ 2)),                    # 2 if up-to-date
                     options=list(columnDefs = list(list(visible=FALSE,  # very clunky way to hide 'OutOfDate' column
                                                         targets=c(length(names(screen_fobt_ix()))+1)))),
@@ -235,8 +261,6 @@ renderDT({datatable(screen_fobt_ix() %>%
 
 ```
 
-### Billing
-
 ```{r}
 
 # collects ALL billings for patients who have displayed appointments
@@ -247,27 +271,85 @@ appointments_billings <- reactive({
     mutate(SERVICEDATE = as.Date(substr(SERVICEDATE, 1, 10)))
   })
 
+```
+
+### Billing
+
+```{r}
 # filter to billings which are done on the same day as displayed appointments
 appointments_billings_sameday <- reactive({
   appointments_billings() %>%
     filter(SERVICEDATE == AppointmentDate) %>%    # billings done on the same day as displayed appointments
-    select(c('InternalID', 'AppointmentDate', 'MBSITEM')) %>%
-    mutate(MBSITEM = semantic_tag(MBSITEM, colour = 'green')) %>%
+    select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'MBSITEM', 'DESCRIPTION')) %>%
+    # need to preserve ApppointmentTime and Provider in the case where there are multiple apppointments
+    # for the patient in the same time period/day and providers
+    mutate(MBSITEM = semantic_button(MBSITEM,
+                                     colour = 'green',
+                                     popuptext = paste0(AppointmentDate, ' ', DESCRIPTION))) %>%
       # change MBSITEMS into fomantic/semantic tags
-    group_by(InternalID, AppointmentDate) %>%     # gathers item numbers on the same day into a single row
+    group_by(InternalID, AppointmentDate, AppointmentTime, Provider) %>%     
+    # gathers item numbers on the same day into a single row
     summarise(Billings = paste(MBSITEM, collapse = "")) %>%
     ungroup()
   })
 
 renderDT({datatable(appointments() %>%
-                      left_join(appointments_billings_sameday(), by = c('InternalID', 'AppointmentDate')) %>%
+                      left_join(appointments_billings_sameday(),
+                                by = c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>%
                       select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status', 'Billings')),
-                    escape = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE), # only interpret HTML for last column
+                    escape = c(6), # only interpret HTML for last column
                     fillContainer = TRUE)
   })
 
 ```
 
+
+### Chronic Disease Management Items
+
+```{r}
+cdm_item <- data.frame(
+  code = c(721, 723, 732, 703, 705, 707, 2517, 2521, 2525, 2546, 2552, 2558, 2700, 2701, 2715, 2717),
+  name = c('GPMP', 'TCA', 'GPMP R/V', 'HA', 'HA', 'HA', 'DiabetesSIP', 'DiabetesSIP', 'DiabetesSIP',
+           'AsthmaSIP', 'AsthmaSIP', 'AsthmaSIP', 'MHCP', 'MHCP', 'MHCP', 'MHCP')
+  )
+
+# filter to CDM item billed prior to (or on) the day of displayed appointments
+# only show most recent billed item in each category
+
+appointments_billings_cdm <- reactive({
+    appointments_billings() %>%
+    filter(MBSITEM %in% cdm_item$code) %>% # only chronic disease management items
+    filter(SERVICEDATE <= AppointmentDate) %>% # only items billed before the appointment day
+    select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'SERVICEDATE', 'MBSITEM', 'DESCRIPTION')) %>%
+    mutate(MBSNAME = cdm_item$name[match(MBSITEM, cdm_item$code)]) %>%
+    group_by(InternalID, AppointmentDate, AppointmentTime, Provider, MBSNAME) %>%   
+    # group by patient, apppointment and CDM type (name)
+    filter(SERVICEDATE == max(SERVICEDATE, na.rm = TRUE)) %>% # only keep most recent service
+    ungroup() %>%
+    mutate(mbstag = semantic_tag(MBSNAME,
+                                 colour = ifelse((interval(SERVICEDATE, AppointmentDate)<=years(1)),
+                                                 'green',
+                                                 'yellow'),
+                                 popuptext = paste0("Item : ", MBSITEM, 
+                                                    ", Date : ", SERVICEDATE,
+                                                    ", Description : ", DESCRIPTION)
+                                 )) %>%
+    group_by(InternalID, AppointmentDate, AppointmentTime, Provider) %>%     
+    # gathers item numbers on the same day into a single row
+    summarise(cdm = paste(mbstag, collapse = "")) %>%
+    ungroup()
+  })
+
+renderDT({datatable(appointments() %>%
+                      inner_join(appointments_billings_cdm(),
+                                 by = c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>%
+                      select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'cdm')),
+                    colnames = c('Patient', 'Appointment Date', 'Appointment Time', 'Provider', 'CDM items'),
+                    escape = c(5), # only interpret HTML for last column
+                    fillContainer = TRUE)
+  })
+
+```
 
 ### Appointments
 
@@ -304,5 +386,18 @@ renderDT({datatable(
     select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status')),
   fillContainer = TRUE
   )})
+
+```
+
+### Test
+
+```{r}
+a <- data.frame(a=c(2,3,68),b=c('<span class="huge green positive ui tag label"><span data-tooltip="check me" data-variation="huge">721</span></span><span class="huge green positive ui tag label">723</span><span class="ui tag label">10990</span>','<div class="huge ui negative button" data-tooltip="more info if required"><i class="wheelchair loading icon"></i>2715</div>', '<div class="huge ui positive button"><span class="tool" data-tip="Lots and lots of information. make sure everything is complete on year after ... 12/Jan/2019">GPMP</span></div>'))
+
+renderDT({datatable(a, escape = FALSE)})
+```
+
+### Test2
+```{r}
 
 ```
