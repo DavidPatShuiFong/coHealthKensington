@@ -14,6 +14,7 @@ runtime: shiny
 
 ```{r global, setup, include=FALSE}
 library(flexdashboard)
+library(shinyjs)
 library(tidyverse)
 
 library(dbplyr) # database interaction for dplyr
@@ -122,13 +123,15 @@ Inputs {.sidebar}
 ### Appointment Date Range
 
 ```{r}
-
 wellPanel(
+  useShinyjs(rmd = TRUE),
+
   dateInput('date1', label = 'From:', format='DD dd/M/yyyy', min = Sys.Date()-4000, max = Sys.Date()+180),
   dateInput('date2', label = 'To:', format='DD dd/M/yyyy', min = Sys.Date()-4000, max = Sys.Date()+180),
   actionButton('update_date', 'Update', icon('refresh'), class = 'btn btn-primary'),
   helpText("After adjusting the date range, click the 'Update' button",
-           "to adjust the viewed appointment date range")
+           "to adjust the viewed appointment date range"),
+  actionButton('update_date_today', 'Today', icon('refresh'), class = 'btn btn-primary')
 )
 ```
 
@@ -151,6 +154,12 @@ date_a <- eventReactive(input$update_date, {
 })
 date_b <- eventReactive(input$update_date, {
   input$date2
+})
+
+date_today <- observeEvent(input$update_date_today, {
+  updateDateInput(session, 'date1', value = Sys.Date())
+  updateDateInput(session, 'date2', value = Sys.Date())
+  click('update_date')
 })
 
 # list of clinicians shown depends on 'practice location' chosen
