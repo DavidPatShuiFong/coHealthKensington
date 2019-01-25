@@ -1,6 +1,6 @@
 ---
 title: "Daily View"
-author: "David Fong"
+author: "&copy; 2019 David Fong"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
