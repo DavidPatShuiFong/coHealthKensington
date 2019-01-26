@@ -131,8 +131,10 @@ wellPanel(
   actionButton('update_date', 'Update', icon('refresh'), class = 'btn btn-primary'),
   helpText("After adjusting the date range, click the 'Update' button",
            "to adjust the viewed appointment date range"),
-  actionButton('update_date_today', 'Today', icon('refresh'), class = 'btn btn-primary')
+  tags$div(title = "View today's appointments",
+           actionButton('update_date_today', 'Today', icon('calendar'), class = 'btn btn-info'))
 )
+
 ```
 
 ### Clinician list
@@ -140,7 +142,9 @@ wellPanel(
 ```{r}
 wellPanel(
   selectInput('location', 'Practice location', locations, selected = 'All'),
-  uiOutput('clinicianList')
+  uiOutput('clinicianList'),
+  tags$div(title = "Select/De-select all clinicians",
+           actionButton('toggle_clinician_list', 'Select All/None', icon('check-square'), class = 'btn btn-primary'))
 )
 
 ```
@@ -151,10 +155,10 @@ wellPanel(
 # only adjust appointment view after dates are 'submitted'
 date_a <- eventReactive(input$update_date, {
   input$date1
-})
+}, ignoreNULL = FALSE) # initialize on first run, after that only update if 'update' button used
 date_b <- eventReactive(input$update_date, {
   input$date2
-})
+}, ignoreNULL = FALSE)
 
 date_today <- observeEvent(input$update_date_today, {
   updateDateInput(session, 'date1', value = Sys.Date())
@@ -163,11 +167,26 @@ date_today <- observeEvent(input$update_date_today, {
 })
 
 # list of clinicians shown depends on 'practice location' chosen
+clinician_choice_list <- reactive({
+  if (input$location == 'All') users$Fullname else users[users$Location == input$location,]$Fullname
+  # note that 'ifelse' only returns result in the same 'shape' as the comparison statement
+})
+
 output$clinicianList <- renderUI({
-  choice_list <- if (input$location == 'All') users$Fullname else users[users$Location == input$location,]$Fullname
-    # note that 'ifelse' only returns result in the same 'shape' as the comparison statement
+  choice_list <- clinician_choice_list()
   chosen_list <- input$clinicians # retain previous selections
-  checkboxGroupInput('clinicians', 'Clinician', choices = choice_list, selected = chosen_list)
+  checkboxGroupInput('clinicians', label = 'Clinician', choices = choice_list, selected = chosen_list)
+})
+
+toggle_clinicians <- observeEvent(input$toggle_clinician_list, {
+  if (input$toggle_clinician_list == 0) {return(NULL)}
+  else if (input$toggle_clinician_list%%2 == 1) {
+    updateCheckboxGroupInput(session, 'clinicians', selected = clinician_choice_list())
+    # toggle all clinicians selected
+  } else {
+    updateCheckboxGroupInput(session, 'clinicians', selected = character(0))
+    # no clinicians selected
+  }
 })
 
 ```
@@ -339,9 +358,7 @@ appointments_billings_cdm <- reactive({
                                  colour = ifelse((interval(SERVICEDATE, AppointmentDate)<=years(1)),
                                                  'green',
                                                  'yellow'),
-                                 popuptext = paste0("Item : ", MBSITEM, 
-                                                    ", Date : ", SERVICEDATE,
-                                                    ", Description : ", DESCRIPTION)
+                                 popuptext = paste0("Date : ", SERVICEDATE)
                                  )) %>%
     group_by(InternalID, AppointmentDate, AppointmentTime, Provider) %>%     
     # gathers item numbers on the same day into a single row
@@ -401,8 +418,11 @@ renderDT({datatable(
 ### Test
 
 ```{r}
-a <- data.frame(a=c(2,3,68),b=c('<span class="huge green positive ui tag label"><span data-tooltip="check me" data-variation="huge">721</span></span><span class="huge green positive ui tag label">723</span><span class="ui tag label">10990</span>','<div class="huge ui negative button" data-tooltip="more info if required"><i class="wheelchair loading icon"></i>2715</div>', '<div class="huge ui positive button"><span class="tool" data-tip="Lots and lots of information. make sure everything is complete on year after ... 12/Jan/2019">GPMP</span></div>'))
-
+a <- data.frame(a=c(2,3,68,19),
+                b=c('<span class="huge green positive ui tag label"><span data-tooltip="check me" data-variation="huge">721</span></span><span class="huge green positive ui tag label">723</span><span class="ui tag label">10990</span>',
+                    '<div class="huge ui negative button" data-tooltip="waiting ... "><i class="wheelchair loading icon"></i>2715</div>', '<div class="huge ui positive button"><span class="tool" data-tip="Lots and lots of information. make sure everything is complete on year after ... 12/Jan/2019">GPMP</span></div>',
+                    'extra'))
+               
 renderDT({datatable(a, escape = FALSE)})
 ```
 
