@@ -297,14 +297,6 @@ fobt_result_query <- paste("SELECT InternalID, ReportDate, ResultName FROM dbo.B
                          	                     '12503-9','12504-7','27401-9','27925-7','27926-5',
 	                                             '57905-2','56490-6','56491-4','29771-3')")
 
-appointment_list <- reactive({
-  appointments() %>%
-    left_join(patients, by = 'InternalID', copy = TRUE) %>%   # need patients database to access date-of-birth
-    select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'DOB')) %>% 
-    mutate(DOB = as.Date(substr(DOB, 1, 10))) %>%
-    mutate(Age = calc_age(DOB, AppointmentDate))
-  })
-
 screen_fobt_list <- reactive({
   appointment_list() %>%
     filter(Age >= 50 & Age <=75) # from age 50 to 75 years inclusive
@@ -476,6 +468,14 @@ appointments <- reactive({
     mutate(AppointmentTime = hrmin(AppointmentTime), AppointmentDate = as.Date(substr(AppointmentDate,1,10))) %>%
     arrange(AppointmentDate, AppointmentTime)
 })
+
+appointment_list <- reactive({
+  appointments() %>%
+    left_join(patients, by = 'InternalID', copy = TRUE) %>%   # need patients database to access date-of-birth
+    select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'DOB')) %>% 
+    mutate(DOB = as.Date(substr(DOB, 1, 10))) %>%
+    mutate(Age = calc_age(DOB, AppointmentDate))
+  })
 
 renderDT({datatable_styled(
   appointments() %>%
