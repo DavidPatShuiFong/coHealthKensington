@@ -64,6 +64,10 @@ investigations <- pool %>%
   # due to some type of bug/standards non-compliance. also can handle the History table. need to
   # 'Select' out just a few columns.
 
+immunizations <- pool %>%
+  tbl(in_schema('dbo', 'BPS_Immunisations')) %>%
+  select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID'))
+
 correspondenceIn <- pool %>%
   tbl(in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
   select(c('InternalID', 'CorrespondenceDate', 'Subject', 'Detail'))
@@ -246,6 +250,29 @@ Row {.tabset}
 ### Daily Measure
 
 ```{r}
+zostavax_immunization_query <-paste("SELECT InternalID, GivenDate, VaccineName FROM dbo.BPS_Immunisations
+                                     WHERE ((VaccineName LIKE '%zostavax%') OR (VaccineID=103))
+                                     AND InternalID NOT IN (SELECT InternalID
+                                     FROM dbo.Preventivehealth
+                                     WHERE itemid=15)")
+# either then name is 'like' Zostavax (this is needed where vaccines have been imported from Medical Director)
+# or the specific Zostavax ID in Best Practice
+# and excluding those who have been excluded from Zostavax reminders (itemid=15)
+
+zostavax_vax_list <- reactive({
+  appointment_list() %>%
+    filter(Age>=70 & Age<=80) %>% # from age 70 to 80 years inclusive
+    left_join(dbGetQuery(pool, zostavax_immunization_query) %>% collect(),
+              by = 'InternalID')
+})
+
+renderDT({datatable_styled(zostavax_vax_list())})
+
+```
+
+### Daily Measure 2
+
+```{r}
 
 bowel_cancer_screen_terms <- c("(VALUES('%FOB%'), ('%OCCULT%'), ('%FAECAL HUMAN HAEMOGLOBIN%'),
                                ('%OCB NATIONAL SCREENING%'), ('%FHB%'), ('%FAECAL BLOOD%'),
@@ -270,13 +297,17 @@ fobt_result_query <- paste("SELECT InternalID, ReportDate, ResultName FROM dbo.B
                          	                     '12503-9','12504-7','27401-9','27925-7','27926-5',
 	                                             '57905-2','56490-6','56491-4','29771-3')")
 
-screen_fobt_list <- reactive({
+appointment_list <- reactive({
   appointments() %>%
     left_join(patients, by = 'InternalID', copy = TRUE) %>%   # need patients database to access date-of-birth
     select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'DOB')) %>% 
-    mutate(DOB = substr(DOB, 1, 10)) %>%
-    mutate(Age = calc_age(DOB)) %>%
-    filter(DOB<=ymd(Sys.Date())-years(50) & DOB>ymd(Sys.Date())-years(75)) # from age 50 to 75 years inclusive
+    mutate(DOB = as.Date(substr(DOB, 1, 10))) %>%
+    mutate(Age = calc_age(DOB, AppointmentDate))
+  })
+
+screen_fobt_list <- reactive({
+  appointment_list() %>%
+    filter(Age >= 50 & Age <=75) # from age 50 to 75 years inclusive
 })
 
 screen_fobt_ix <- reactive({
@@ -326,7 +357,7 @@ renderDT({
 
 # collects ALL billings for patients who have displayed appointments
 appointments_billings <- reactive({
-  appointments() %>%
+  appointment_list() %>%
     left_join(services, by = c('InternalID' = 'INTERNALID'), copy=TRUE) %>%
     collect() %>%
     mutate(SERVICEDATE = as.Date(substr(SERVICEDATE, 1, 10)))
@@ -442,7 +473,7 @@ appointments <- reactive({
       # a database filter on an empty list after %in% will result in an error message
     select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status')) %>%
     collect() %>% # force read of database
-    mutate(AppointmentTime = hrmin(AppointmentTime), AppointmentDate = substr(AppointmentDate,1,10)) %>%
+    mutate(AppointmentTime = hrmin(AppointmentTime), AppointmentDate = as.Date(substr(AppointmentDate,1,10))) %>%
     arrange(AppointmentDate, AppointmentTime)
 })
 
