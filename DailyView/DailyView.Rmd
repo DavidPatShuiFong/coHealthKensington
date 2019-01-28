@@ -64,9 +64,17 @@ investigations <- pool %>%
   # due to some type of bug/standards non-compliance. also can handle the History table. need to
   # 'Select' out just a few columns.
 
+appointments <- pool %>%
+  tbl(in_schema('dbo', 'BPS_Appointments')) %>%
+  select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status'))
+
 immunizations <- pool %>%
   tbl(in_schema('dbo', 'BPS_Immunisations')) %>%
   select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID'))
+
+preventive_health <- pool %>%
+  tbl(in_schema('dbo', 'PreventiveHealth')) %>%
+  select(c('INTERNALID', 'ITEMID'))
 
 correspondenceIn <- pool %>%
   tbl(in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
@@ -82,6 +90,10 @@ invoices <- pool %>%
 
 services <- pool %>%
   tbl(in_schema('dbo', 'BPS_SERVICES'))
+
+history <- pool %>%
+  tbl(in_schema('dbo', 'BPS_History')) %>%
+  select(c('InternalID', 'Year', 'Condition', 'ConditionID', 'Status'))
 
 # function setup
 
@@ -250,23 +262,46 @@ Row {.tabset}
 ### Daily Measure
 
 ```{r}
-zostavax_immunization_query <-paste("SELECT InternalID, GivenDate, VaccineName FROM dbo.BPS_Immunisations
-                                     WHERE ((VaccineName LIKE '%zostavax%') OR (VaccineID=103))
-                                     AND InternalID NOT IN (SELECT InternalID
-                                     FROM dbo.Preventivehealth
-                                     WHERE itemid=15)")
+
 # either then name is 'like' Zostavax (this is needed where vaccines have been imported from Medical Director)
 # or the specific Zostavax ID in Best Practice
 # and excluding those who have been excluded from Zostavax reminders (itemid=15)
 
 zostavax_vax_list <- reactive({
-  appointment_list() %>%
-    filter(Age>=70 & Age<=80) %>% # from age 70 to 80 years inclusive
-    left_join(dbGetQuery(pool, zostavax_immunization_query) %>% collect(),
-              by = 'InternalID')
+  appointments_list() %>%
+    filter(Age >= 70 & Age <= 80) %>% # from age 70 to 80 years inclusive
+    left_join(immunizations %>%
+                # those who have had the zostavax vaccine
+                filter((VaccineName %LIKE% "%zostavax%") | (VaccineID == 103)), copy = TRUE) %>%
+    left_join(preventive_health %>%
+                # those who have been removed from the reminder system for Zostavax
+                filter(ITEMID == 15), by = c('InternalID' = 'INTERNALID'), copy = TRUE) %>%
+    collect() %>%
+    mutate(GivenDate = as.Date(substr(GivenDate, 1, 10))) %>%
+    mutate(GivenDate = if_else(GivenDate <= AppointmentDate, GivenDate, as.Date(NA))) %>%
+    # only include immunizations given up to date of appointment, if there are any immunizations at all
+    # note that 'if_else' is vectorize, demanding same datataype for TRUE/FALSE alternatives
+    # 'ifelse' does not preserve date type in this circumstance
+    mutate(zostavaxtag = semantic_tag(paste0(' Zostavax '),
+                                      colour = if_else(is.na(GivenDate),
+                                                      if_else(is.na(ITEMID), c('red'), c('purple')),
+                                                      c('green')),
+                                      # red if not given, purple if removed from herpes zoster vax reminders
+                                      # and green if has had the vax
+                                      popuphtml = paste0("<h4>",
+                                                         if_else(is.na(ITEMID),
+                                                                paste0('Date : ', format(GivenDate)),
+                                                                'Removed from herpes zoster immunization reminders'),
+                                                         "</h4>")))
 })
 
-renderDT({datatable_styled(zostavax_vax_list())})
+renderDT({datatable_styled(zostavax_vax_list() %>%
+                                 select(c('Patient', 'AppointmentDate', 'AppointmentTime',
+                                          'Provider', 'DOB', 'Age', 'zostavaxtag')),
+                           escape = c(7),
+                           colnames = c('Zostavax' = 'zostavaxtag')
+                           )
+  })
 
 ```
 
@@ -298,7 +333,7 @@ fobt_result_query <- paste("SELECT InternalID, ReportDate, ResultName FROM dbo.B
 	                                             '57905-2','56490-6','56491-4','29771-3')")
 
 screen_fobt_list <- reactive({
-  appointment_list() %>%
+  appointments_list() %>%
     filter(Age >= 50 & Age <=75) # from age 50 to 75 years inclusive
 })
 
@@ -349,7 +384,7 @@ renderDT({
 
 # collects ALL billings for patients who have displayed appointments
 appointments_billings <- reactive({
-  appointment_list() %>%
+  appointments_list() %>%
     left_join(services, by = c('InternalID' = 'INTERNALID'), copy=TRUE) %>%
     collect() %>%
     mutate(SERVICEDATE = as.Date(substr(SERVICEDATE, 1, 10)))
@@ -380,7 +415,7 @@ appointments_billings_sameday <- reactive({
   })
 
 renderDT({
-  datatable_styled(appointments() %>%
+  datatable_styled(appointments_filtered_time() %>%
                      left_join(appointments_billings_sameday(),
                        by = c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>%
                      select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status', 'Billings')),
@@ -407,16 +442,20 @@ appointments_billings_cdm <- reactive({
     appointments_billings() %>%
     filter(MBSITEM %in% cdm_item$code) %>% # only chronic disease management items
     filter(SERVICEDATE <= AppointmentDate) %>% # only items billed before the appointment day
-    select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'SERVICEDATE', 'MBSITEM', 'DESCRIPTION')) %>%
+    select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider',
+             'SERVICEDATE', 'MBSITEM', 'DESCRIPTION')) %>%
     mutate(MBSNAME = cdm_item$name[match(MBSITEM, cdm_item$code)]) %>%
+    rbind(diabetes_list_cdm()) %>%
     group_by(InternalID, AppointmentDate, AppointmentTime, Provider, MBSNAME) %>%   
     # group by patient, apppointment and CDM type (name)
     filter(SERVICEDATE == max(SERVICEDATE, na.rm = TRUE)) %>% # only keep most recent service
     ungroup() %>%
     mutate(mbstag = semantic_tag(MBSNAME,
-                                 colour = ifelse((interval(SERVICEDATE, AppointmentDate)<=years(1)),
-                                                 'green',
-                                                 'yellow'),
+                                 colour = if_else(SERVICEDATE == -Inf,
+                                                  'red', # invalid date is '-Inf', means item not claimed yet
+                                                  if_else(interval(SERVICEDATE, AppointmentDate)<=years(1),
+                                                          'green',
+                                                          'yellow')),
                                  popuphtml = paste0("<h4>Date : ", SERVICEDATE,
                                                     "</h4><h6>Item : ", MBSITEM,
                                                     "</h6><p><font size=\'+0\'>", DESCRIPTION, "</p>")
@@ -428,7 +467,7 @@ appointments_billings_cdm <- reactive({
   })
 
 renderDT({
-  datatable_styled(appointments() %>%
+  datatable_styled(appointments_filtered_time() %>%
                      inner_join(appointments_billings_cdm(),
                                 by = c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>%
                      select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'cdm')),
@@ -436,6 +475,37 @@ renderDT({
                    escape = c(5)) # only interpret HTML for last column
   },
   server = TRUE)
+
+```
+
+```{r}
+# Best Practice Diabetes code
+diabetes_codes <- c(3, 775, 776, 778, 774, 7840, 11998)
+
+# Returns InternalID
+diabetes_list <- reactive({
+  appointments_filtered() %>%
+    inner_join(history %>%
+                 filter(ConditionID %in% diabetes_codes),
+               by = c('InternalID')) %>%
+    select('InternalID')
+  })
+
+diabetes_list_cdm <- reactive({
+  a <- appointments_list() %>%
+    inner_join(diabetes_list(), by = 'InternalID', copy = TRUE) %>%
+    select(c('InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider')) %>%
+    mutate(MBSNAME = c('DiabetesSIP'), DESCRIPTION = c('History : Diabetes'),
+           SERVICEDATE = as.Date(-Inf, origin = '1970-01-01'), MBSITEM = NA) %>%
+    unique()
+  # invalid date set as -Inf, which looks like NA, but is not (is equal to -Inf)
+  # setting invalid date to NA is not good for later comparisons,
+  # where max(... , na.rm=TRUE) needs to be used
+  
+  b <- a %>% mutate(MBSNAME = c('GPMP'))
+  # people with diabetes also qualify for GPMP. duplicate list with 'GPMP' MBSNAME
+  rbind(a, b)
+})
 
 ```
 
@@ -451,26 +521,31 @@ hrmin <- function(t) {
   sprintf('%02d:%02d', td@hour, td@minute)
 }
 
-appointments <- reactive({
+appointments_filtered <- reactive({
+  # find appointments with chosen date range and providers
   validate (
     need(input$clinicians, 'Choose at least one clinician appointment to view'),
     need(date_a(), 'Invalid date range'),
     need(date_b(), 'Invalid date range')
   )
-  pool %>% 
-    tbl(in_schema('dbo', 'BPS_Appointments')) %>%
+  appointments %>% 
     filter(AppointmentDate >= local(date_a()) & AppointmentDate <= local(date_b())) %>%
-    filter(Provider %in% input$clinicians) %>% 
+    filter(Provider %in% input$clinicians)
       # note that dbplyr does not evaluate manipulated expressions, hence the use of 'local()'
       # a database filter on an empty list after %in% will result in an error message
-    select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status')) %>%
-    collect() %>% # force read of database
+})
+
+appointments_filtered_time <- reactive({
+  # changes times to more R (and visually) friendly formats
+  appointments_filtered() %>%
+    collect() %>% # force read of database required before mutations
     mutate(AppointmentTime = hrmin(AppointmentTime), AppointmentDate = as.Date(substr(AppointmentDate,1,10))) %>%
     arrange(AppointmentDate, AppointmentTime)
 })
 
-appointment_list <- reactive({
-  appointments() %>%
+appointments_list <- reactive({
+  # add date of birth to appointment list
+  appointments_filtered_time() %>%
     left_join(patients, by = 'InternalID', copy = TRUE) %>%   # need patients database to access date-of-birth
     select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'DOB')) %>% 
     mutate(DOB = as.Date(substr(DOB, 1, 10))) %>%
@@ -478,7 +553,7 @@ appointment_list <- reactive({
   })
 
 renderDT({datatable_styled(
-  appointments() %>%
+  appointments_filtered_time() %>%
     select(c('Patient', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status')))
   },
   server = FALSE)
@@ -497,4 +572,11 @@ a <- data.frame(a=c(2,3,68),
 renderDT({datatable(a,
                     options = list(initComplete = JS(semantic_popupJS)),
                     escape = FALSE)})
+```
+
+### Test2
+
+```{r}
+renderDT({datatable(diabetes_list_cdm())
+})
 ```
