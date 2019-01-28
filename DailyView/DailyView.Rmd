@@ -562,6 +562,8 @@ renderDT({datatable_styled(
 
 ### Test
 
+#### 1
+
 ```{r}
 a <- data.frame(a=c(2,3,68),
                 b=c('<span class="huge green positive ui tag label"><span data-tooltip="check me" data-variation="huge">721</span></span><span class="huge green positive ui tag label">723</span><span class="ui tag label">10990</span>',
@@ -571,12 +573,14 @@ a <- data.frame(a=c(2,3,68),
                
 renderDT({datatable(a,
                     options = list(initComplete = JS(semantic_popupJS)),
-                    escape = FALSE)})
+                    escape = FALSE,
+                    fillContainer = FALSE)})
 ```
 
-### Test2
+#### 2
 
 ```{r}
-renderDT({datatable(diabetes_list_cdm())
-})
+renderDT({datatable(diabetes_list_cdm(),
+                    fillContainer = FALSE)})
+
 ```
