@@ -166,6 +166,9 @@ datatable_styled <- function(data, fillContainer = TRUE,
 
 ```
 
+DailyView
+=========
+
 Inputs {.sidebar}
 -----------------------------------------------------------------------
 
@@ -177,11 +180,14 @@ wellPanel(
 
   dateInput('date1', label = 'From:', format='D dd/M/yyyy', min = Sys.Date()-4000, max = Sys.Date()+180),
   dateInput('date2', label = 'To:', format='D dd/M/yyyy', min = Sys.Date()-4000, max = Sys.Date()+180),
+  # range of dates, by default will be 'today'
   actionButton('update_date', 'Update', icon('refresh'), class = 'btn btn-primary'),
+  # date range not activated until the 'Update' button is clicked
   helpText("After adjusting the date range, click the 'Update' button",
            "to adjust the viewed appointment date range"),
   tags$div(title = "View today's appointments",
            actionButton('update_date_today', 'Today', icon('calendar'), class = 'btn btn-info'))
+  # manually change date range to 'today'
 )
 
 ```
@@ -191,8 +197,11 @@ wellPanel(
 ```{r}
 wellPanel(
   selectInput('location', 'Practice location', locations, selected = 'All'),
+  # list of practice sites
   uiOutput('clinicianList'),
+  # list of clinicians at the currently chosen practice site
   tags$div(title = "Select/De-select all clinicians",
+           # toggle all listed clinicians on, or off
            actionButton('toggle_clinician_list', 'Select All/None', icon('check-square'), class = 'btn btn-primary'))
 )
 
@@ -201,7 +210,7 @@ wellPanel(
 ```{r}
 # 'helper' functions for input panel
 
-# only adjust appointment view after dates are 'submitted'
+# only adjust appointment view after dates are 'submitted' using 'submit' button
 date_a <- eventReactive(input$update_date, {
   input$date1
 }, ignoreNULL = FALSE) # initialize on first run, after that only update if 'update' button used
@@ -210,9 +219,12 @@ date_b <- eventReactive(input$update_date, {
 }, ignoreNULL = FALSE)
 
 date_today <- observeEvent(input$update_date_today, {
+  # 'today' button. change date range to today, and click the 'update' button
   updateDateInput(session, 'date1', value = Sys.Date())
   updateDateInput(session, 'date2', value = Sys.Date())
+  # change date range to today
   click('update_date')
+  # and click the 'update' button
 })
 
 # list of clinicians shown depends on 'practice location' chosen
@@ -584,3 +596,9 @@ renderDT({datatable(diabetes_list_cdm(),
                     fillContainer = FALSE)})
 
 ```
+
+Measures
+========
+
+Configuration
+=============
