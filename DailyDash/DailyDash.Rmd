@@ -694,24 +694,3 @@ ui_locations <- fluidPage(
 shinyApp(ui = ui_locations, server = server_locations)
 
 ```
-
-### Test
-
-```{r}
-
-server <- function(input, output) {
-
-	names <- data.frame(Name=character(), Email=character(), Date=numeric(),
-						Type = factor(levels=c('Admin', 'User')),
-						stringsAsFactors=FALSE)
-	names$Date <- as.Date(names$Date, origin='1970-01-01')
-	namesdt <- dtedit(input, output, name = 'names', names)
-}
-
-##### Create the shiny UI
-ui <- fluidPage(
-	uiOutput('names')
-)
-
-shinyApp(ui = ui, server = server)
-```
