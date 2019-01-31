@@ -1,5 +1,5 @@
 ---
-title: "Daily View"
+title: "Daily Dash"
 author: "&copy; 2019 David Fong"
 output: 
   flexdashboard::flex_dashboard:
@@ -22,11 +22,32 @@ library(DBI)    # R database interface
 library(odbc)   # the database backend handler for Microsoft SQL Server
 library(pool)   # database pool
 
+library(configr)    # config file read/write
 library(base64enc)  # simple obfuscation for passwords
 library(DT)         # pretty-print tables/tibbles
 library(lubridate)  # time handling library
+library(DTedit)     # datatable edit wrapper. install with devtools::install_github('jbryer/DTedit')
 
 # database setup
+
+if (is.yaml.file('./DailyDash_cfg.yaml')) {
+  # if config file exists and is a YAML-type file
+  config <- read.config('./DailyDash_cfg.yaml')
+} else {
+  config <- list()
+  config$server = character()       # e.g. '127.0.0.1\\BPSINSTANCE'
+  config$database = character()     # e.g. 'BPSSamples' for samples database
+  config$userid = c('bpsrawdata')   # database user ID
+  config$dbpassword = character()   # password for the database user
+  config$practice_locations = data.frame(name = character(), description = character(),
+                                         stringsAsFactors = FALSE) 
+    # list of practice locations, or practitioner groups
+  config$users <- data.frame(fullname = character(),
+                             location = character(),
+                             expert = logical(),         # expert options available
+                             globalview = logical(),     # able to view all users
+                             admin = logical())  # able to change major system settings
+}
 
 filename <- 'BestPracticeSQL_password.txt'
 dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
@@ -602,3 +623,95 @@ Measures
 
 Configuration
 =============
+
+Row {.tabset}
+----------------
+
+### Database
+
+```{r}
+
+wellPanel(
+  textInput('server_address', 'Server address', config$server),
+  textInput('database_name', 'Database name', config$database),
+  textInput('database_user', 'Database user', config$userid),
+  textInput('database_password', 'Database password', config$dbpassword),
+  actionButton('update_database', 'Update', icon('refresh'), class = 'btn btn-primary'),
+  # Database details not changed until the 'Update' button is clicked
+  helpText("After adjusting datebase details, click the 'Update' button",
+           "Changed settings are not used until DailyDash is restarted.")
+)
+
+update_database_details <- observe({
+  input$update_database
+  config$server <- isolate(input$server_address)
+  config$database <- isolate(input$database_name)
+  config$userid <- isolate(input$database_user)
+  config$dbpassword <- isolate(input$database_password)
+})
+
+```
+
+### Practice locations
+
+```{r}
+
+### callback definitions for DTedit
+locations.insert.callback <- function(data, row) {
+  mydata <- rbind(data, config$practice_locations)
+  return(mydata)
+}
+
+locations.update.callback <- function(data, olddata, row) {
+	config$practice_locations[row,] <- data[1,]
+	return(mydata)
+}
+
+locations.delete.callback <- function(data, row) {
+	mydata[row,] <- NULL
+	return(mydata)
+}
+
+server_locations <- function(input, output) {
+  
+  # depends on package DTedit
+  dtedit(input, output,
+         name = 'locations',
+         thedata = config$practice_locations,
+         edit.label.cols = c('Practice Locations', 'Description'),
+         show.copy = FALSE,
+         input.types = c(name = 'textInput', description = 'textInput'),
+         callback.update = locations.update.callback,
+         callback.insert = locations.insert.callback,
+         callback.delete = locations.delete.callback
+         )
+}
+
+ui_locations <- fluidPage(
+  uiOutput('locations')
+)
+
+shinyApp(ui = ui_locations, server = server_locations)
+
+```
+
+### Test
+
+```{r}
+
+server <- function(input, output) {
+
+	names <- data.frame(Name=character(), Email=character(), Date=numeric(),
+						Type = factor(levels=c('Admin', 'User')),
+						stringsAsFactors=FALSE)
+	names$Date <- as.Date(names$Date, origin='1970-01-01')
+	namesdt <- dtedit(input, output, name = 'names', names)
+}
+
+##### Create the shiny UI
+ui <- fluidPage(
+	uiOutput('names')
+)
+
+shinyApp(ui = ui, server = server)
+```
