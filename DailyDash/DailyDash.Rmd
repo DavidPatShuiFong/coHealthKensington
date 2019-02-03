@@ -14,7 +14,9 @@ runtime: shiny
 
 ```{r global, setup, include=FALSE}
 library(flexdashboard)
+library(shiny)
 library(shinyjs)
+library(shinyWidgets)
 library(tidyverse)
 
 library(dbplyr) # database interaction for dplyr
@@ -27,96 +29,164 @@ library(base64enc)  # simple obfuscation for passwords
 library(DT)         # pretty-print tables/tibbles
 library(lubridate)  # time handling library
 library(DTedit)     # datatable edit wrapper. install with devtools::install_github('jbryer/DTedit')
+```
 
-# database setup
+```{r}
+# read config files
 
 if (is.yaml.file('./DailyDash_cfg.yaml')) {
   # if config file exists and is a YAML-type file
   config <- read.config('./DailyDash_cfg.yaml')
 } else {
   config <- list()
-  config$server = character()       # e.g. '127.0.0.1\\BPSINSTANCE'
-  config$database = character()     # e.g. 'BPSSamples' for samples database
-  config$userid = c('bpsrawdata')   # database user ID
-  config$dbpassword = character()   # password for the database user
-  config$practice_locations = data.frame(name = character(), description = character(),
-                                         stringsAsFactors = FALSE) 
+  
+  config$server <- c('127.0.0.1\\BPSINSTANCE')
+  config$database <- c('BPSSamples')
+  filename <- 'BestPracticeSQL_password.txt'
+  config$dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
+  
+  # config$server <-  character()       # e.g. '127.0.0.1\\BPSINSTANCE'
+  # config$database <-  character()     # e.g. 'BPSSamples' for samples database
+  config$userid <-  c('bpsrawdata')   # database user ID
+  # config$dbpassword <-  character()   # password for the database user
+  config$practice_locations <-  data.frame(Name = character(), Description = character(),
+                                       stringsAsFactors = FALSE) 
     # list of practice locations, or practitioner groups
-  config$users <- data.frame(fullname = character(),
-                             location = character(),
-                             expert = logical(),         # expert options available
-                             globalview = logical(),     # able to view all users
-                             admin = logical())  # able to change major system settings
+  config$users <- data.frame(Fullname = character(),
+                             AuthIdentity = character(),  # authentication identity
+                             Location = character(),
+                             Expert = logical(),         # expert options available
+                             Globalview = logical(),     # able to view all users
+                             Admin = logical(),          # able to change major system settings
+                             stringsAsFactors = FALSE)  
 }
 
-filename <- 'BestPracticeSQL_password.txt'
-dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
-  # obfuscated, NOT ENCRYPTED, password
-  # password file created with command like
-  #    cat(base64encode(charToRaw('mypassword')), file="BestPracticeSQL_password.txt")
+# filename <- 'BestPracticeSQL_password.txt'
+# dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
+# obfuscated, NOT ENCRYPTED, password
+# password file created with command like
+# cat(base64encode(charToRaw('mypassword')), file="BestPracticeSQL_password.txt")
 
-pool <- dbPool(odbc::odbc(), driver = "SQL Server", server = "127.0.0.1\\BPSINSTANCE", 
-                      database = "BPSSamples", uid = "bpsrawdata", pwd = dbpassword)
+```
 
-practice_locations <- as.tibble(read.csv('PracticeLocations.csv'))
+```{r}
+# initial database setup
+
+pool <- tryCatch(dbPool(odbc::odbc(), driver = "SQL Server",
+                        server = config$server, database = config$database,
+                        uid = config$userid, pwd = config$dbpassword),
+                 error = function(e) {NULL}
+)
+
+# pool <- dbPool(odbc::odbc(), driver = "SQL Server", server = "127.0.0.1\\BPSINSTANCE", 
+#                      database = "BPSSamples", uid = "bpsrawdata", pwd = dbpassword)
+
+# practice_locations <- as.tibble(read.csv('PracticeLocations.csv'))
   # two columns : 'Fullname' and 'Location'
 
 # database table setup
+# initially set to NULL
 
-users <- pool %>% 
-  tbl(in_schema('dbo', 'BPS_Users')) %>% 
-  select(c('UserID', 'Surname', 'Firstname', 'LocationName', 'Title')) %>%
-  collect() %>%     # forces database to be read (instead of subsequent 'lazy' read)
-  mutate(Title = trimws(Title), Firstname = trimws(Firstname), Surname = trimws(Surname)) %>%
-  mutate(Fullname = paste(Title, Firstname, Surname, sep = ' ')) %>%
-  left_join(practice_locations) %>%   # add practice locations imported from external CSV file
-  filter(!is.na(Location))            # only include users which have a defined practice location
+users <- NULL
+locations <- NULL
+patients <- NULL
+investigations <- NULL
+appointments <- NULL
+immunizations <- NULL
+preventive_health <- NULL
+correspondenceIn <- NULL
+reportValues <- NULL
+invoices <- NULL
+services <- NULL
+history <- NULL
+locations <- NULL
 
-locations <- rbind(tibble(Location = 'All'), practice_locations %>% select(c('Location')) %>% unique()) 
+```
+
+```{r}
+# function setup
+
+location_list <- function() {
+  locations <- data.frame(Name = c('All'))
   # add 'All' to (unique) locations list
+  if (!is.null(config$practice_locations)) {
+    locations <- rbind(locations, config$practice_locations %>% select(c('Name')) %>% unique())
+  }
+  return(locations$Name)
+}
 
-patients <- pool %>%
-  tbl(in_schema('dbo', 'BPS_Patients'))
+```
 
-investigations <- pool %>%            
-  tbl(in_schema('dbo', 'BPS_Investigations')) %>%
-  select(c('InternalID', 'Collected', 'TestName'))
+```{r}
+
+db <- reactiveValues()
+db$version <- 0
+
+# change this whenever database is initialized
+
+initialize_databases <- function(pool) {
+  
+  db$users <- pool %>% 
+    # Fullname, UserID, Surname, Firstname, LocationName, Title, ProviderNo
+    tbl(in_schema('dbo', 'BPS_Users')) %>% 
+    select(c('UserID', 'Surname', 'Firstname', 'LocationName', 'Title', 'ProviderNo')) %>%
+    collect() %>%     # forces database to be read (instead of subsequent 'lazy' read)
+    mutate(Title = trimws(Title), Firstname = trimws(Firstname), Surname = trimws(Surname)) %>%
+    mutate(Fullname = paste(Title, Firstname, Surname, sep = ' ')) %>%
+    left_join(config$users, by = 'Fullname')   # add user details including practice locations
+  
+  patients <- pool %>%
+    tbl(in_schema('dbo', 'BPS_Patients'))
+  
+  investigations <- pool %>%
+    # InternalID, Collected (Date), TestName
+    tbl(in_schema('dbo', 'BPS_Investigations')) %>%
+    select(c('InternalID', 'Collected', 'TestName'))
   # as of Jan/2019, the odbc engine for MSSQL can't handle the full ('Select *') Investigations table
   # due to some type of bug/standards non-compliance. also can handle the History table. need to
   # 'Select' out just a few columns.
-
-appointments <- pool %>%
-  tbl(in_schema('dbo', 'BPS_Appointments')) %>%
-  select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status'))
-
-immunizations <- pool %>%
-  tbl(in_schema('dbo', 'BPS_Immunisations')) %>%
-  select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID'))
-
-preventive_health <- pool %>%
-  tbl(in_schema('dbo', 'PreventiveHealth')) %>%
-  select(c('INTERNALID', 'ITEMID'))
-
-correspondenceIn <- pool %>%
-  tbl(in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
-  select(c('InternalID', 'CorrespondenceDate', 'Subject', 'Detail'))
-
-reportValues <- pool %>%
-  tbl(in_schema('dbo', 'BPS_ReportValues')) %>%
-  select(c('InternalID', 'ReportDate', 'ResultName', 'LoincCode'))
-
-invoices <- pool %>%
-  tbl(in_schema('dbo', 'INVOICES')) %>%
-  select(c('InternalID', 'INVOICEID', 'INVOICEDATE'))
-
-services <- pool %>%
-  tbl(in_schema('dbo', 'BPS_SERVICES'))
-
-history <- pool %>%
-  tbl(in_schema('dbo', 'BPS_History')) %>%
-  select(c('InternalID', 'Year', 'Condition', 'ConditionID', 'Status'))
-
-# function setup
+  
+  appointments <- pool %>%
+    # Patient, InternalID, AppointmentDate, AppointmentTime, Provider, Status
+    tbl(in_schema('dbo', 'BPS_Appointments')) %>%
+    select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status'))
+  
+  immunizations <- pool %>%
+    # InternalID, GivenDate, VaccineName, VaccineID
+    tbl(in_schema('dbo', 'BPS_Immunisations')) %>%
+    select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID'))
+  
+  preventive_health <- pool %>%
+    # INTERNALID, ITEMID (e.g. not for Zostavax remindders)
+    tbl(in_schema('dbo', 'PreventiveHealth')) %>%
+    select(c('INTERNALID', 'ITEMID'))
+  
+  correspondenceIn <- pool %>%
+    # InternalID, CorrespondenceDate, Subject, Detail
+    tbl(in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
+    select(c('InternalID', 'CorrespondenceDate', 'Subject', 'Detail'))
+  
+  reportValues <- pool %>%
+    # InternalID, ReportDate, ResultName, LoincCode
+    tbl(in_schema('dbo', 'BPS_ReportValues')) %>%
+    select(c('InternalID', 'ReportDate', 'ResultName', 'LoincCode'))
+  
+  invoices <- pool %>%
+    # InternalID, INVOICEID, INVOICEDATE
+    tbl(in_schema('dbo', 'INVOICES')) %>%
+    select(c('InternalID', 'INVOICEID', 'INVOICEDATE'))
+  
+  services <- pool %>%
+    tbl(in_schema('dbo', 'BPS_SERVICES'))
+  
+  history <- pool %>%
+    # InternalID, Year, Condition, ConditionID, Status
+    tbl(in_schema('dbo', 'BPS_History')) %>%
+    select(c('InternalID', 'Year', 'Condition', 'ConditionID', 'Status'))
+  
+  db$dbversion <- isolate(db$dbversion+1)
+  
+  }
 
 # fomantic (semantic.ui) string functions
 
@@ -184,6 +254,14 @@ datatable_styled <- function(data, fillContainer = TRUE,
 # by default, have export/print buttons, only render what is visible
 # javascript code to attach labels to semantic/fomantic JS popups
 # no pagination
+```
+
+```{r}
+### database and location initialization
+
+if (is.environment(pool)) {
+  initialize_databases(pool) # if pool is successfully initialized
+}
 
 ```
 
@@ -217,7 +295,7 @@ wellPanel(
 
 ```{r}
 wellPanel(
-  selectInput('location', 'Practice location', locations, selected = 'All'),
+  selectInput(inputId = 'location', label = 'Practice location', choices = location_list(), selected = 'All'),
   # list of practice sites
   uiOutput('clinicianList'),
   # list of clinicians at the currently chosen practice site
@@ -249,10 +327,29 @@ date_today <- observeEvent(input$update_date_today, {
 })
 
 # list of clinicians shown depends on 'practice location' chosen
-clinician_choice_list <- reactive({
-  if (input$location == 'All') users$Fullname else users[users$Location == input$location,]$Fullname
-  # note that 'ifelse' only returns result in the same 'shape' as the comparison statement
-})
+clinician_choice_list <- reactiveVal()
+
+observeEvent(c(
+  db$dbversion,
+  input$location),
+  {
+    if (!is.null(input$location)) { # only if initialized
+      clinician_choice_list(
+        if (isolate(input$location) == 'All')
+          {isolate(db$users$Fullname)} else
+          {db$users[db$users$Location == input$location,]$Fullname})
+      print(paste('redefined clinician list:', clinician_choice_list()))
+      # note that 'ifelse' only returns result in the same 'shape' as the comparison statement
+      #choice_list <- isolate(clinician_choice_list)
+      #chosen_list <- isolate(input$clinicians) # retain previous selections
+      #updateCheckboxGroupInput(session, 'clinicians', choices = choice_list, selected = chosen_list)
+    }
+  })
+
+#clinician_choice_list <- reactive({
+#  if (input$location == 'All') users$Fullname else users[users$Location == input$location,]$Fullname
+#  # note that 'ifelse' only returns result in the same 'shape' as the comparison statement
+#})
 
 output$clinicianList <- renderUI({
   choice_list <- clinician_choice_list()
@@ -638,16 +735,31 @@ wellPanel(
   textInput('database_password', 'Database password', config$dbpassword),
   actionButton('update_database', 'Update', icon('refresh'), class = 'btn btn-primary'),
   # Database details not changed until the 'Update' button is clicked
-  helpText("After adjusting datebase details, click the 'Update' button",
-           "Changed settings are not used until DailyDash is restarted.")
+  helpText("After adjusting datebase details, click the 'Update' button")
 )
 
-update_database_details <- observe({
-  input$update_database
-  config$server <- isolate(input$server_address)
-  config$database <- isolate(input$database_name)
-  config$userid <- isolate(input$database_user)
-  config$dbpassword <- isolate(input$database_password)
+update_database_details <- observeEvent(input$update_database, {
+  tmp_pool <- tryCatch(dbPool(odbc::odbc(), driver = "SQL Server",
+                              server = isolate(input$server_address), database = isolate(input$database_name),
+                              uid = isolate(input$database_user), pwd = isolate(input$database_password)),
+                       error = function(e) {sendSweetAlert(title = 'Unable to connect to database',
+                                                           type = 'error',
+                                                           html = TRUE,
+                                                           text = paste ('<font color="red">', e, '</font><br>',
+                                                                         'Adjust database settings'))})
+  if (is.environment(tmp_pool)) {
+      config$server <- isolate(input$server_address)
+      config$database <- isolate(input$database_name)
+      config$userid <- isolate(input$database_user)
+      config$dbpassword <- isolate(input$database_password)
+      if (is.environment(pool)) {
+        poolClose(pool) # close database link if previously successfully initialized
+      }
+      pool <- tmp_pool
+      initialize_databases(pool)
+      sendSweetAlert(title = 'Connected!', type = 'success')
+  }
+
 })
 
 ```
@@ -658,18 +770,21 @@ update_database_details <- observe({
 
 ### callback definitions for DTedit
 locations.insert.callback <- function(data, row) {
-  mydata <- rbind(data, config$practice_locations)
-  return(mydata)
+  config$practice_locations <- data
+  updateSelectInput(session, inputId = 'location', choices = location_list())
+  return(config$practice_locations)
 }
 
 locations.update.callback <- function(data, olddata, row) {
-	config$practice_locations[row,] <- data[1,]
-	return(mydata)
+	config$practice_locations <- data
+	updateSelectInput(session, inputId = 'location', choices = location_list())
+	return(config$practice_locations)
 }
 
 locations.delete.callback <- function(data, row) {
-	mydata[row,] <- NULL
-	return(mydata)
+	config$practice_locations <- data[-c(row),]
+	updateSelectInput(session, inputId = 'location', choices = location_list())
+	return(config$practice_locations)
 }
 
 server_locations <- function(input, output) {
@@ -680,7 +795,7 @@ server_locations <- function(input, output) {
          thedata = config$practice_locations,
          edit.label.cols = c('Practice Locations', 'Description'),
          show.copy = FALSE,
-         input.types = c(name = 'textInput', description = 'textInput'),
+         input.types = c(Name = 'textInput', Description = 'textInput'),
          callback.update = locations.update.callback,
          callback.insert = locations.insert.callback,
          callback.delete = locations.delete.callback
@@ -692,5 +807,49 @@ ui_locations <- fluidPage(
 )
 
 shinyApp(ui = ui_locations, server = server_locations)
+
+```
+
+### Users
+
+```{r}
+
+### callback definitions for DTedit
+users.insert.callback <- function(data, row) {
+  config$users <- data
+  return(config$users)
+}
+
+users.update.callback <- function(data, olddata, row) {
+	config$practice_locations <- data
+	return(config$users)
+}
+
+users.delete.callback <- function(data, row) {
+	config$users <- data[-c(row),]
+	return(config$users)
+}
+
+server_users <- function(input, output) {
+  
+  # depends on package DTedit
+  dtedit(input, output,
+         name = 'users',
+         thedata = config$users,
+         edit.cols = c('Fullname', 'AuthIdentity', 'Location', 'Expert', 'Globalview', 'Admin'),
+         show.copy = FALSE,
+         input.types = c(AuthIdentity = 'textInput'),
+         input.choices = c(Fullname = (users %>% select('Fullname')), Location = config$practice_locations$name),
+         callback.update = users.update.callback,
+         callback.insert = users.insert.callback,
+         callback.delete = users.delete.callback
+         )
+}
+
+ui_users <- fluidPage(
+  uiOutput('users')
+)
+
+shinyApp(ui = ui_users, server = server_users)
 
 ```
