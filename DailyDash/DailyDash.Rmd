@@ -40,7 +40,7 @@ if (is.yaml.file('./DailyDash_cfg.yaml')) {
 } else {
   config <- list()
   
-  config$server <- c('127.0.0.1\\BPSINSTANCE')
+  config$server <- c('127.0.0.1\\BPSINSTANCE') # Note that 'true' server name includes a single backslash
   config$database <- c('BPSSamples')
   filename <- 'BestPracticeSQL_password.txt'
   config$dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
@@ -135,10 +135,10 @@ initialize_databases <- function(pool) {
     mutate(Fullname = paste(Title, Firstname, Surname, sep = ' ')) %>%
     left_join(config$users, by = 'Fullname')   # add user details including practice locations
   
-  patients <- pool %>%
+  db$patients <- pool %>%
     tbl(in_schema('dbo', 'BPS_Patients'))
   
-  investigations <- pool %>%
+  db$investigations <- pool %>%
     # InternalID, Collected (Date), TestName
     tbl(in_schema('dbo', 'BPS_Investigations')) %>%
     select(c('InternalID', 'Collected', 'TestName'))
@@ -146,40 +146,40 @@ initialize_databases <- function(pool) {
   # due to some type of bug/standards non-compliance. also can handle the History table. need to
   # 'Select' out just a few columns.
   
-  appointments <- pool %>%
+  db$appointments <- pool %>%
     # Patient, InternalID, AppointmentDate, AppointmentTime, Provider, Status
     tbl(in_schema('dbo', 'BPS_Appointments')) %>%
     select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'Status'))
   
-  immunizations <- pool %>%
+  db$immunizations <- pool %>%
     # InternalID, GivenDate, VaccineName, VaccineID
     tbl(in_schema('dbo', 'BPS_Immunisations')) %>%
     select(c('InternalID', 'GivenDate', 'VaccineName', 'VaccineID'))
   
-  preventive_health <- pool %>%
+  db$preventive_health <- pool %>%
     # INTERNALID, ITEMID (e.g. not for Zostavax remindders)
     tbl(in_schema('dbo', 'PreventiveHealth')) %>%
     select(c('INTERNALID', 'ITEMID'))
   
-  correspondenceIn <- pool %>%
+  db$correspondenceIn <- pool %>%
     # InternalID, CorrespondenceDate, Subject, Detail
     tbl(in_schema('dbo', 'BPS_CorrespondenceIn')) %>%
     select(c('InternalID', 'CorrespondenceDate', 'Subject', 'Detail'))
   
-  reportValues <- pool %>%
+  db$reportValues <- pool %>%
     # InternalID, ReportDate, ResultName, LoincCode
     tbl(in_schema('dbo', 'BPS_ReportValues')) %>%
     select(c('InternalID', 'ReportDate', 'ResultName', 'LoincCode'))
   
-  invoices <- pool %>%
+  db$invoices <- pool %>%
     # InternalID, INVOICEID, INVOICEDATE
     tbl(in_schema('dbo', 'INVOICES')) %>%
     select(c('InternalID', 'INVOICEID', 'INVOICEDATE'))
   
-  services <- pool %>%
+  db$services <- pool %>%
     tbl(in_schema('dbo', 'BPS_SERVICES'))
   
-  history <- pool %>%
+  db$history <- pool %>%
     # InternalID, Year, Condition, ConditionID, Status
     tbl(in_schema('dbo', 'BPS_History')) %>%
     select(c('InternalID', 'Year', 'Condition', 'ConditionID', 'Status'))
@@ -338,18 +338,9 @@ observeEvent(c(
         if (isolate(input$location) == 'All')
           {isolate(db$users$Fullname)} else
           {db$users[db$users$Location == input$location,]$Fullname})
-      print(paste('redefined clinician list:', clinician_choice_list()))
       # note that 'ifelse' only returns result in the same 'shape' as the comparison statement
-      #choice_list <- isolate(clinician_choice_list)
-      #chosen_list <- isolate(input$clinicians) # retain previous selections
-      #updateCheckboxGroupInput(session, 'clinicians', choices = choice_list, selected = chosen_list)
     }
   })
-
-#clinician_choice_list <- reactive({
-#  if (input$location == 'All') users$Fullname else users[users$Location == input$location,]$Fullname
-#  # note that 'ifelse' only returns result in the same 'shape' as the comparison statement
-#})
 
 output$clinicianList <- renderUI({
   choice_list <- clinician_choice_list()
@@ -400,10 +391,10 @@ Row {.tabset}
 zostavax_vax_list <- reactive({
   appointments_list() %>%
     filter(Age >= 70 & Age <= 80) %>% # from age 70 to 80 years inclusive
-    left_join(immunizations %>%
+    left_join(db$immunizations %>%
                 # those who have had the zostavax vaccine
                 filter((VaccineName %LIKE% "%zostavax%") | (VaccineID == 103)), copy = TRUE) %>%
-    left_join(preventive_health %>%
+    left_join(db$preventive_health %>%
                 # those who have been removed from the reminder system for Zostavax
                 filter(ITEMID == 15), by = c('InternalID' = 'INTERNALID'), copy = TRUE) %>%
     collect() %>%
@@ -515,7 +506,7 @@ renderDT({
 # collects ALL billings for patients who have displayed appointments
 appointments_billings <- reactive({
   appointments_list() %>%
-    left_join(services, by = c('InternalID' = 'INTERNALID'), copy=TRUE) %>%
+    left_join(db$services, by = c('InternalID' = 'INTERNALID'), copy=TRUE) %>%
     collect() %>%
     mutate(SERVICEDATE = as.Date(substr(SERVICEDATE, 1, 10)))
   })
@@ -615,7 +606,7 @@ diabetes_codes <- c(3, 775, 776, 778, 774, 7840, 11998)
 # Returns InternalID
 diabetes_list <- reactive({
   appointments_filtered() %>%
-    inner_join(history %>%
+    inner_join(db$history %>%
                  filter(ConditionID %in% diabetes_codes),
                by = c('InternalID')) %>%
     select('InternalID')
@@ -658,7 +649,7 @@ appointments_filtered <- reactive({
     need(date_a(), 'Invalid date range'),
     need(date_b(), 'Invalid date range')
   )
-  appointments %>% 
+  db$appointments %>% 
     filter(AppointmentDate >= local(date_a()) & AppointmentDate <= local(date_b())) %>%
     filter(Provider %in% input$clinicians)
       # note that dbplyr does not evaluate manipulated expressions, hence the use of 'local()'
@@ -676,7 +667,7 @@ appointments_filtered_time <- reactive({
 appointments_list <- reactive({
   # add date of birth to appointment list
   appointments_filtered_time() %>%
-    left_join(patients, by = 'InternalID', copy = TRUE) %>%   # need patients database to access date-of-birth
+    left_join(db$patients, by = 'InternalID', copy = TRUE) %>%   # need patients database to access date-of-birth
     select(c('Patient', 'InternalID', 'AppointmentDate', 'AppointmentTime', 'Provider', 'DOB')) %>% 
     mutate(DOB = as.Date(substr(DOB, 1, 10))) %>%
     mutate(Age = calc_age(DOB, AppointmentDate))
@@ -742,11 +733,7 @@ update_database_details <- observeEvent(input$update_database, {
   tmp_pool <- tryCatch(dbPool(odbc::odbc(), driver = "SQL Server",
                               server = isolate(input$server_address), database = isolate(input$database_name),
                               uid = isolate(input$database_user), pwd = isolate(input$database_password)),
-                       error = function(e) {sendSweetAlert(title = 'Unable to connect to database',
-                                                           type = 'error',
-                                                           html = TRUE,
-                                                           text = paste ('<font color="red">', e, '</font><br>',
-                                                                         'Adjust database settings'))})
+                       error = function(e) {NULL})
   if (is.environment(tmp_pool)) {
       config$server <- isolate(input$server_address)
       config$database <- isolate(input$database_name)
@@ -757,7 +744,6 @@ update_database_details <- observeEvent(input$update_database, {
       }
       pool <- tmp_pool
       initialize_databases(pool)
-      sendSweetAlert(title = 'Connected!', type = 'success')
   }
 
 })
