@@ -180,6 +180,8 @@ dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/07'),0.70)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/14'),0.67)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/21'),0.65)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/28'),0.66)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/02/04'),0.55)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/02/11'),0.74)
 
 ```
 
