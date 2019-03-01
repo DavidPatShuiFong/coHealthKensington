@@ -78,6 +78,8 @@ bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/12/15'),126,208)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/01/01'),127,210)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/01/15'),127,209)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/02/01'),127,212)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/02/15'),126,213)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/03/01'),125,213)
 
 bp_other_report <- data.frame(Date = as.Date('2017/04/01'), Vaccinated = 107, Total = 634)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2017/07/01'),179,649)
@@ -101,6 +103,9 @@ bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/12/15'),314,708)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/01/01'),316,718)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/01/15'),318,720)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/02/01'),321,724)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/02/15'),319,721)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/03/01'),318,719)
+
 
 pencat_report <- data.frame(Date = as.Date('2018/06/19'), Vaccinated = 98, Total = 204)
 pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2018/05/18'),98,203)
