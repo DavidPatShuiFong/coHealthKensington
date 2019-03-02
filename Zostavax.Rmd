@@ -1,5 +1,9 @@
 ---
-title: "Varicella immunization proportion, coHealth Kensington, 2017-2018"
+title: "Zostavax immunization against herpes zoster, Kensington 2017-2018"
+abstract: Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Immunization against herpes zoster reduces the occurrence of the disease. This project measures the proportion of eligible patients at the Kensington site vaccinated against herpes zoster over 2017-2018. A mechanism to further increase immunization coverage is proposed. The techniques used in this project are generalizable to other practice quality improvement activities.
+
+author: '[David Fong](http://www.davidfong.info)'
+
 output: html_document
 ---
 
@@ -10,60 +14,289 @@ library(broom)
 library(plotly)
 ```
 
-## Varicella immunisation age 70-79 years, PenCAT data up to April 2018
+### Synopsis and proposal
 
-Also weekly Doctor's Control panel (DCP) data from August 2017 to January 2018
+Shingles is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Although treatment is available for herpes zoster, particularly if detected early, immunization can reduce the risk of contracting the disease.
 
-```{r data}
+The currently available shingles vaccine in Australia, Zostavax, can reduce the incidence of herpes zoster in the 70-79 year year age group by 41%[^1].
 
-pencat_report <- data.frame(Date = as.Date('2018/04/03'), Vaccinated = 91, Total = 181)
+[^1]: Australian Immunization Handbook - <https://immunisationhandbook.health.gov.au/vaccine-preventable-diseases/zoster-herpes-zoster>
 
-pencat_report[2,] <- list(as.Date('2018/03/16'),88,180)
-pencat_report[3,] <- list(as.Date('2018/02/10'),82,173)
-pencat_report[4,] <- list(as.Date('2017/12/28'),77,172)
-pencat_report[5,] <- list(as.Date('2017/12/01'),74,166)
-pencat_report[6,] <- list(as.Date('2017/11/03'),71,166)
-pencat_report[7,] <- list(as.Date('2017/10/03'),64,164)
-pencat_report[8,] <- list(as.Date('2017/09/05'),63,164)
-pencat_report[9,] <- list(as.Date('2017/08/01'),58,165)
-pencat_report[10,] <- list(as.Date('2017/07/06'),58,164)
+Varicella immunization is recommended and funded by the Australian Government for people aged 70 years to reduce the risk of shingles (herpes zoster). Until 30 October 2021, a single catch-up dose is available for adults aged 71 to 79 years inclusive[^2].
+
+[^2]: National Immunisation Program Schedule - https://beta.health.gov.au/health-topics/immunisation/immunisation-throughout-life/national-immunisation-program-schedule
+
+The proportion of eligible 70-79 year olds who have been immunized against Zostavax has steadily increased to 50% of the target population at the Kensington site of coHealth, but [has been static from May to September 2018](#bp_proportion). Current [weekly immunization data](#dcp_proportion) has also been static at 50% since late 2018, suggesting that without additional measures the immunization proportion is unlikely to significantly improve.
+
+As approximately 50% of eligible patients each week seen at the practice leave without a record of immunization, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
+
+A [Best Practice SQL script](SQLnovax) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnovax). It was proposed to identify patients at the beginning of each day for a month and continue to evaluate the proportion of eligible patients immunized against shingles. This was done from 27th September 2018 to 9th November 2018 inclusive.
+
+Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
+
+### Data
+
+Best Practice (up to February 2019) and PenCAT (up to June 2018) provide data of proportion of 'active' patients immunized against herpes zoster. Patients are defined as 'active' if they have three contacts over two years. Some 'contacts' may be trivial, e.g. correspondence and telephone contacts with third parties.
+
+Weekly Doctor's Control panel (DCP) data, August 2017 to February 2019, provides data of proportion of contacted patients immunized against herpes zoster. DCP data is weekly contact data, where a contact is defined as where a billing has occurred.
+
+Full data and analysis R-code can be found on [Github](https://github.com/DavidPatShuiFong/coHealthKensington/blob/master/Zostavax.Rmd).
+
+```{r data, include=FALSE}
+
+bp_report <- data.frame(Date = as.Date('2017/01/01'), Vaccinated = 27, Total = 199)
+
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/02/01'),36,196)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/03/01'),45,196)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/04/01'),50,193)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/05/01'),53,189)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/06/01'),59,190)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/07/01'),59,190)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/08/01'),59,189)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/09/01'),60,192)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/10/01'),63,190)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/11/01'),70,192)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/12/01'),74,187)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/01/01'),76,188)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/02/01'),81,189)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/03/01'),84,190)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/04/01'),90,191)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/05/01'),95,192)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/06/01'),97,189)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/06/15'),96,187)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/07/01'),97,192)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/07/15'),97,188)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/08/01'),97,193)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/08/15'),97,192)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/09/01'),97,194)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/09/15'),100,193)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/10/01'),100,197)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/11/01'),115,203)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/11/15'),119,202)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/12/01'),122,204)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/12/15'),126,208)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/01/01'),127,210)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/01/15'),127,209)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/02/01'),127,212)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/02/15'),126,213)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/03/01'),125,213)
+
+bp_other_report <- data.frame(Date = as.Date('2017/01/01'), Vaccinated = 65, Total = 612)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2017/04/01'),107,634)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2017/07/01'),179,649)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2017/10/01'),217,664)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/01/01'),239,667)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/04/01'),248,684)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/05/01'),256,686)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/06/01'),274,687)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/06/15'),278,687)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/07/01'),280,690)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/07/15'),286,690)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/08/01'),290,693)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/08/15'),294,692)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/09/01'),298,692)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/09/15'),300,695)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/10/01'),303,697)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/11/01'),304,704)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/11/15'),304,704)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/12/01'),310,708)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/12/15'),314,708)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/01/01'),316,718)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/01/15'),318,720)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/02/01'),321,724)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/02/15'),319,721)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/03/01'),318,719)
+
+
+pencat_report <- data.frame(Date = as.Date('2018/06/19'), Vaccinated = 98, Total = 204)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2018/05/18'),98,203)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2018/04/18'),92,206)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2018/03/16'),89,207)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2018/02/10'),85,208)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/12/28'),79,206)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/12/01'),77,207)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/11/03'),73,207)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/10/03'),65,203)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/09/05'),64,203)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/08/01'),59,203)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/07/06'),58,202)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/04/21'),51,204)
+pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/03/17'),44,207)
 
 dcp_report <- data.frame(Date =  as.Date('2017/08/13'), Proportion = 0.26)
 
-dcp_report[2,] <- list(as.Date('2017/08/20'),0.19)
-dcp_report[3,] <- list(as.Date('2017/08/27'),0.24)
-dcp_report[4,] <- list(as.Date('2017/09/10'),0.42)
-dcp_report[5,] <- list(as.Date('2017/09/17'),0.35)
-dcp_report[6,] <- list(as.Date('2017/09/24'),0.34)
-dcp_report[7,] <- list(as.Date('2017/10/01'),0.45)
-dcp_report[8,] <- list(as.Date('2017/10/22'),0.44)
-dcp_report[9,] <- list(as.Date('2017/10/29'),0.50)
-dcp_report[10,] <- list(as.Date('2017/11/05'),0.48)
-dcp_report[11,] <- list(as.Date('2017/11/12'),0.42)
-dcp_report[12,] <- list(as.Date('2017/11/19'),0.57)
-dcp_report[13,] <- list(as.Date('2017/12/03'),0.53)
-dcp_report[14,] <- list(as.Date('2017/12/17'),0.75)
-dcp_report[15,] <- list(as.Date('2017/12/31'),0.45)
-dcp_report[16,] <- list(as.Date('2018/01/07'),0.51)
-
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/08/20'),0.19)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/08/27'),0.24)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/09/10'),0.42)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/09/17'),0.35)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/09/24'),0.34)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/10/01'),0.45)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/10/22'),0.44)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/10/29'),0.50)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/11/05'),0.48)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/11/12'),0.42)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/11/19'),0.57)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/12/03'),0.53)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/12/17'),0.75)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/12/31'),0.45)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/01/08'),0.51)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/01/22'),0.52)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/01/29'),0.37)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/02/12'),0.62)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/02/19'),0.46)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/02/26'),0.38)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/03/05'),0.45)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/03/12'),0.47)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/03/19'),0.53)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/03/26'),0.56)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/04/02'),0.56)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/04/16'),0.5)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/04/30'),0.59)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/05/07'),0.59)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/05/14'),0.55)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/05/21'),0.44)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/05/28'),0.62)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/06/11'),0.44)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/06/25'),0.46)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/07/02'),0.42)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/07/16'),0.62)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/07/30'),0.61)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/08/06'),0.45)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/08/20'),0.53)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/08/27'),0.62)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/03'),0.46)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/10'),0.44)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/17'),0.70)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/09/24'),0.48)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/01'),0.57)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/08'),0.57)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/15'),0.59)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/21'),0.48)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/10/28'),0.79)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/11/05'),0.69)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/11/12'),0.72)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/11/19'),0.76)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/11/26'),0.62)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/12/02'),0.77)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/12/09'),0.71)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/12/16'),0.70)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/12/24'),0.88)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2018/12/31'),0.72)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/07'),0.70)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/14'),0.67)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/21'),0.65)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/28'),0.66)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/02/04'),0.55)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/02/11'),0.74)
 
 ```
 
-## Plots
+### Plots
 
-```{r plot_pencat}
+```{r cbindpad, include=FALSE}
 
-pencat_report$Proportion <- pencat_report$Vaccinated/pencat_report$Total
-pencat_report$numericDate <- as.numeric(pencat_report$Date) 
-m <- augment(loess(Proportion ~ numericDate, # loess localized regression accepts numbers, not dates
-                   data = pencat_report))
-m$Date <- pencat_report$Date # but plotly plots require, in this case, dates, not numbers!
+cbindPad <- function(...){
+  # version of cbind which pads empty rows with NA
+  # written by 'joran', in answer to question on StackOverflow
+  # https://stackoverflow.com/questions/6988184/combining-two-data-frames-of-different-lengths
+  args <- list(...)
+  n <- sapply(args,nrow)
+  mx <- max(n)
+  pad <- function(x, mx){
+      if (nrow(x) < mx){
+        nms <- colnames(x)
+        padTemp <- matrix(NA, mx - nrow(x), ncol(x))
+        colnames(padTemp) <- nms
+        if (ncol(x)==0) {
+          return(padTemp)
+        } else {
+        return(rbind(x,padTemp))
+        }
+      }
+    else{
+      return(x)
+    }
+  }
+  rs <- lapply(args,pad,mx)
+  return(do.call(cbind,rs))
+}
 
-p_pencat <- pencat_report %>%
-  plot_ly(x=~Date, y=~Proportion,
-          type='scatter', mode='markers') %>%
-  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date))),
+``` 
+
+#### Proportion of active patients immunized against shingles {#bp_proportion}
+
+The proportion of active patients aged 70-79 years who have a record of shingles vaccination at each time period.
+
+Main data source is extracted using [SQL code](SQLzno) in Best Practice[^3].
+
+[^3]: Similar data is available from PenCAT, which is also plotted for comparison purposes. Accurate PenCAT data not available after June 2018, because PenCAT does not recognize varicella zoster immunization which had been migrated from one clinical software (Medical Director 3) to another (Best Practice). The clinical software migration occurred in June 2018.
+
+Proportion of patients recorded as having been immunized steadily increased from less than 15% in January 2017 to 50% in May 2018.  Since May 2018, the proportion immunized remained steady/flat at 50% until September 2018.
+
+
+```{r data_manipulate, include=FALSE}
+pencat_report <- pencat_report %>%
+  mutate(pencat_Proportion = Vaccinated/Total) %>%
+  mutate(pencat_numericDate = as.numeric(Date)) %>%
+  rename(pencat_Date = Date) %>%
+  select(pencat_Proportion, pencat_Date, pencat_numericDate)
+
+bp_report <- bp_report %>%
+  mutate(Proportion = Vaccinated/Total) %>%
+  mutate(numericDate = as.numeric(Date))
+
+bp_other_report <- bp_other_report %>%
+  mutate(other_Proportion = Vaccinated/Total) %>%
+  mutate(other_numericDate = as.numeric(Date)) %>%
+  rename(other_Date = Date) %>%
+  rename(other_Vaccinated = Vaccinated) %>%
+  rename(other_Total = Total)
+
+bp_report <- cbindPad(bp_report, pencat_report)
+bp_report <- cbindPad(bp_report, bp_other_report)
+# adds pencat_report to bp_report
+# uses defined function cbindPad (defined in previous code section)
+# note that rows originating from pencat_report are not 'aligned'
+# with the rows in bp_report, nor do they need to be...
+
+```
+
+
+```{r plot_bp, warning=FALSE, message=FALSE, echo=FALSE}
+
+ml <- loess(Proportion ~ numericDate, data = bp_report, span = 0.5)
+m <- augment(ml) #loess localized regression accepts numbers, not dates
+m$Date <- bp_report$Date # but plotly plots require, in this case, dates, not numbers!
+
+ml_p <- loess(pencat_Proportion ~ pencat_numericDate, data = bp_report, span = 0.5)
+m_p <- augment(ml_p)
+
+m_p$Date <- bp_report$other_Date[!is.na(bp_report$pencat_Date)]
+
+ml_o <- loess(other_Proportion ~ other_numericDate, data = bp_report)
+m_o <- augment(ml_o)
+m_o$other_Date <- bp_report$other_Date[!is.na(bp_report$other_Date)]
+m_o$Proportion <- bp_report$other_Proportion[!is.na(bp_report$other_Proportion)]
+
+p_bp <- bp_report %>%
+  plot_ly(x = ~Date, y = ~Proportion,
+          name = 'BP Kensington',
+          type = 'scatter', mode = 'markers') %>%
+  add_lines(y = ~fitted(ml), x = ~Date,
             line = list(color = 'rgba(7,164,181,1)'),
+            showlegend = FALSE) %>%
+  add_trace(x=~pencat_Date, y = ~pencat_Proportion,
+            name = 'PenCAT Kensington', type = 'scatter', mode = 'markers',
+            marker = list(color = 'rgba(164,164,164,.5)')) %>%
+  add_lines(y = ~fitted(ml_p), x = ~pencat_Date[!is.na(pencat_Date)],
+            line = list(color = 'rgba(164,164,164,.5)', dash = 'dash'),
+            showlegend = FALSE) %>%
+
+  add_trace(x=~other_Date, y = ~other_Proportion,
+            name = 'Other coHealth', type = 'scatter', mode = 'markers',
+            marker = list(color = 'rgba(200,82,82,.5)')) %>%
+  add_lines(y = ~fitted(ml_o), x = ~other_Date[!is.na(other_Date)],
+            line = list(color = 'rgba(200,82,82,.5)', dash = 'dash'),
             showlegend = FALSE) %>%
   add_ribbons(data = m,
               x = ~Date,
@@ -71,26 +304,107 @@ p_pencat <- pencat_report %>%
               ymax = ~.fitted + 1.96 * .se.fit,
               line = list(color = 'rgba(7,164,181,0.05)'),
               fillcolor = 'rgba(7,164,181,0.2)',
-              showlegend = FALSE) %>% 
+              showlegend = FALSE) %>%
+  add_ribbons(data = m_o,
+              x = ~other_Date[!is.na(other_Date)],
+              ymin = ~.fitted - 1.96 * .se.fit,
+              ymax = ~.fitted + 1.96 * .se.fit,
+              line = list(color = 'rgba(200,82,82,0.05)'),
+              fillcolor = 'rgba(200,82,82,0.2)',
+              showlegend = FALSE) %>%
   layout(title = 'Varicella zoster vaccination
-         proportion of 70-79 year olds (PenCAT report)
-         coHealth Kensington, 2017-2018')
+         proportion of 70-79 year olds (Best Practice report)
+         coHealth Kensington, 2017-2018',
+         legend = list(x = 0.35, y = 0.2),
+         shapes = list(type = 'rect', fillcolor = 'purple', line = list(color = 'purple'), opacity = .15,
+                       x0 = '2018-09-27', x1 = '2018-11-09', xref = 'x',
+                       y0 = 0, y1 = .62, yref = 'y') # draw rectangle at time of intervention period
+)
 
-p_pencat
+# link <- api_create(p_bp, filename = 'zostavax_coverage')
+p_bp
+
 
 ```
 
-```{r plot_dcp}
+
+``` {r rdiscontinuity}
+
+begin_intervention <- as.Date('2018-09-27')
+end_intervention <- as.Date('2018-11-09')
+
+zero_date <- begin_intervention + (end_intervention-begin_intervention)/2
+
+bp_discontinuity <- bp_report %>%
+  select(c('Date', 'Vaccinated', 'Total', 'Proportion', 'numericDate')) %>%
+  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
+  mutate(Kensington = TRUE) %>% # these are all Kensington results
+  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
+  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
+
+bp_discontinuity_other <- bp_other_report %>%
+  rename(Proportion = other_Proportion) %>%
+  rename(numericDate = other_numericDate) %>%
+  rename(Date = other_Date) %>%
+  rename(Vaccinated = other_Vaccinated) %>%
+  rename(Total = other_Total) %>%
+  select(c('Date', 'Vaccinated', 'Total', 'Proportion', 'numericDate')) %>%
+  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
+  mutate(Kensington = FALSE) %>% # these are all Kensington results
+  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
+  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
+
+bp_discontinuity <- rbind(bp_discontinuity, bp_discontinuity_other) %>%
+  mutate(Subgroup = paste(ifelse(Kensington, "Kensington", "Other"), " ", ifelse(Post, "Post", "Pre"))) %>%
+  mutate(Subgroup = as.factor(Subgroup))
+
+Model100Days <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
+                    data = bp_discontinuity %>% filter(abs(Months) <= 100/30))
+
+summary(Model100Days)
+
+bp_rd_100 <- bp_discontinuity %>% filter(abs(Months) <= 100/30)
+
+bp_rd_100$fv <- bp_rd_100 %>%
+  lm(Proportion ~ Months*Subgroup, .) %>%
+  fitted.values()
+
+bp_rd_100_plot <- bp_rd_100 %>%
+  plot_ly(x = ~Months, y = ~Proportion,
+          name = '',
+          type = 'scatter', mode = 'markers', color = ~Subgroup) %>%
+  add_trace(x = ~Months, y = ~fv, mode = 'lines', showlegend = FALSE) %>%
+  layout(title = 'Pre-post Zostavax immunization proportion',
+         legend = list(x = 0.6, y = 0.6))
+
+bp_rd_100_plot
+
+```
+
+```{r}
+Model135Days <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
+                    data = bp_discontinuity %>% filter(abs(Months) <= 135/30))
+
+summary(Model135Days)
+
+```
+#### Doctor's Control Panel weekly immunization data {#dcp_proportion}
+
+Doctor's Control Panel (DCP) reports weekly immunization patient data, based on age-eligible (70-79 years old) patients seen each week.
+
+Plot shows that by late 2017, 50% of age-eligible patients seen week had been or were vaccinated against varicella zoster.  This proportion has remained the same up to September 2018.
+
+```{r plot_dcp, warning=FALSE, message=FALSE, echo=FALSE}
 
 dcp_report$numericDate <- as.numeric(dcp_report$Date)
 m <- augment(loess(Proportion ~ numericDate,
-                   data = dcp_report))
+                   data = dcp_report, span = 0.7))
 m$Date <- dcp_report$Date
 
 p_dcp <- dcp_report %>%
   plot_ly(x=~Date, y=~Proportion,
           type='scatter', mode='markers') %>%
-  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date))),
+  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date), span = 0.7)),
             line = list(color = 'rgba(7,164,181,1)'),
             showlegend = FALSE) %>%
   add_ribbons(data = m,
@@ -103,8 +417,88 @@ p_dcp <- dcp_report %>%
   layout(title = 'Varicella zoster vaccination
          proportion of 70-79 year olds
          seen in each week (DCP report)
-         coHealth Kensington, 2017-2018')
+         coHealth Kensington, 2017-2018',
+         shapes = list(type = 'rect', fillcolor = 'purple', line = list(color = 'purple'), opacity = .15,
+                       x0 = '2018-09-27', x1 = '2018-11-09', xref = 'x',
+                       y0 = 0, y1 = .9, yref = 'y')
+)
 
+# link <- api_create(p_dcp, filename = 'zostavax_dcp')
 p_dcp
 
+```
+
+### SQL code for Best Practice
+
+#### Number of 'active' patients aged 70-79 years immunized against Zostavax {#SQLzno}
+
+```{sql eval=FALSE}
+SELECT *
+FROM BPS_Patients
+
+WHERE StatusText = 'Active'
+AND DOB BETWEEN DateAdd(Year,-80,'20181001') AND DateAdd(Year,-70,'20181001')
+-- age 70 to 80 years at specified date
+
+AND InternalID IN (SELECT InternalID 
+  FROM Visits v
+  INNER JOIN (VALUES('%bhagwat%'),('%fong%'),('%ekanayake%'),('%shoesmith%'), 
+             ('%plastow%'),('%samarawickrama%'),('%obeyesekere%'),('%chaves%'),
+             ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),('%maxwell%'),
+             ('%grace ho%'))
+             AS ProviderName(Name)
+            ON v.DrName LIKE ProviderName.Name
+            -- appointment with specified providers
+  WHERE VisitDate BETWEEN DateAdd(Year,-2,'20181001') AND '20181001'
+  -- visits during specified two year time period
+  AND RecordStatus = 1
+ 
+  GROUP BY internalid
+  HAVING count(internalid) >= 3 
+  -- minimum 3 visits during specified time period
+  )
+   
+-- remove following condition for total eligible patient numbers
+AND InternalID IN (SELECT InternalID 
+  FROM Immunisations
+  WHERE ((VaccineName LIKE '%zostavax%') OR (VaccineID=103))
+  -- Zostavax immunization data migrated from Medical Director 3 to Best Practice
+  -- did not migrate with VaccineIDs, and so is undetectable by PenCAT
+  AND GivenDate < '20181001')
+
+ORDER BY surname, firstname
+```
+
+#### Identify booked patients without record of Zostavax immunization {#SQLnovax}
+
+```{sql eval=FALSE}
+SELECT *
+FROM BPS_Patients
+
+WHERE StatusText = 'Active'
+AND DOB BETWEEN DateAdd(Year,-80,GetDate()) AND DateAdd(Year,-70,GetDate())
+-- current age 70 to 80 years
+
+AND InternalID IN (SELECT InternalID 
+  FROM Appointments
+  INNER JOIN (VALUES('%bhagwat%'),('%fong%'),('%ekanayake%'),('%shoesmith%'), 
+             ('%plastow%'),('%samarawickrama%'),('%obeyesekere%'),('%chaves%'),
+             ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),('%maxwell%'),
+             ('%grace ho%'),('%bullen%'),('%lambrou%'),('%zeigler%')) AS providers(Name)
+             ON dbo.BPSPayee(UserID) LIKE providers.Name
+             -- appointment with specified providers
+
+  WHERE AppointmentDate = '20180927'
+  -- appointment on specified date
+  AND RecordStatus = 1
+  )
+
+AND InternalID NOT IN (SELECT InternalID
+  FROM Immunisations 
+  WHERE VaccineName LIKE '%zostavax%')
+AND InternalID NOT IN (SELECT InternalID
+  FROM Preventivehealth
+  WHERE itemid=15) -- exclude patients who have 'refused'
+
+ORDER BY surname, firstname
 ```
