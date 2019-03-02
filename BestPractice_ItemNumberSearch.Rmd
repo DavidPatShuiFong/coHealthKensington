@@ -1,0 +1,100 @@
+---
+title: "Best Practice SQL Billing Scripts"
+author: "David Fong"
+date: "11 November 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Appointment not billed
+
+Find out a list of patients who have had a 'visit' by a health care provider (or within a list of several health care providers) and have not yet been billed on a particular day (or within a range of dates).
+ 
+The script is below:
+ 
+In this case, the providers are 'fong', 'obeyesekere', 'mikhail' and 'haynes'. The list can be added to arbitrarily, each name is enclosed in ('%name%'), and separated by commas ','
+ 
+The dates are listed twice. In the script below, once after visitdate '20181108', and again after 'servicedate '20181108'. It is possible to search a range of dates e.g. 
+ 
+VisitDate BETWEEN '20181001' AND '20181030'
+ServiceDate BETWEEN '20181001' AND '20181030'
+
+A 'visit' is a note recorded in the patient progress notes. In reality, this might happen for reasons other than a patient seeing a provider. Appointments in the appointment book are to be found in the $Appointment$ view, but are not used in this search.
+
+```{sql eval=FALSE}
+SELECT *
+FROM BPS_Patients
+ 
+WHERE StatusText = 'Active'
+ 
+AND InternalID IN (SELECT InternalID 
+    FROM Visits v
+    INNER JOIN (VALUES('%fong%'), 
+            ('%obeyesekere%'),
+            ('%mikhail%'),('%haynes%'))
+        AS ProviderName(Name)
+        ON v.DrName LIKE ProviderName.Name
+    WHERE VisitDate =  '20181108'
+    AND RecordStatus = 1)
+AND InternalID NOT IN (SELECT InternalID
+    FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID 
+        FROM Services WHERE Recordstatus = 1 
+            AND Servicedate = '20181108'))
+ 
+ORDER BY surname, firstname
+```
+
+## Search for patients who have been billed a particular item number(s)
+
+```{sql eval=FALSE}
+SELECT *
+FROM BPS_Patients
+ 
+WHERE StatusText = 'Active'
+ 
+AND InternalID IN (SELECT InternalID 
+    FROM Visits v
+    WHERE VisitDate BETWEEN '20180801' AND '20181031'
+    AND RecordStatus = 1)
+AND InternalID IN (SELECT InternalID
+    FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID 
+        FROM Services WHERE Recordstatus = 1 
+            AND Mbsitem IN (735, 739, 743, 747, 750, 758) 
+            AND Servicedate BETWEEN '20180801' AND '20181031'))
+ 
+ORDER BY surname, firstname
+```
+
+## Patients seen by particular providers and have been billed particular item number(s) during specified time period
+
+Item number not necessarily billed by the provider searched for.
+
+```{sql eval=FALSE}
+SELECT *
+FROM BPS_Patients
+ 
+WHERE StatusText = 'Active'
+ 
+AND InternalID IN (SELECT InternalID 
+    FROM Visits v
+    INNER JOIN (VALUES('%maxwell%'), 
+            ('%obeyesekere%'),
+            ('%mikhail%'),('%haynes%'))
+        AS ProviderName(Name)
+        ON v.DrName LIKE ProviderName.Name
+    WHERE VisitDate BETWEEN DateAdd(Year,-2,'20181101') AND '20181101'
+    AND RecordStatus = 1
+ 
+    GROUP BY internalid
+    HAVING count(internalid) >= 1)
+AND InternalID IN (SELECT InternalID
+    FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID 
+        FROM Services WHERE Recordstatus = 1 
+            AND Mbsitem IN (735, 739, 743, 747, 750, 758) 
+            AND Servicedate BEtWEEN '20180501' AND '20181201'))
+ 
+ORDER BY surname, firstname
+```
