@@ -78,8 +78,11 @@ bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/12/15'),126,208)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/01/01'),127,210)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/01/15'),127,209)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/02/01'),127,212)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/02/15'),126,213)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/03/01'),125,213)
 
-bp_other_report <- data.frame(Date = as.Date('2017/04/01'), Vaccinated = 107, Total = 634)
+bp_other_report <- data.frame(Date = as.Date('2017/01/01'), Vaccinated = 65, Total = 612)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2017/04/01'),107,634)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2017/07/01'),179,649)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2017/10/01'),217,664)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/01/01'),239,667)
@@ -101,6 +104,9 @@ bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2018/12/15'),314,708)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/01/01'),316,718)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/01/15'),318,720)
 bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/02/01'),321,724)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/02/15'),319,721)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/03/01'),318,719)
+
 
 pencat_report <- data.frame(Date = as.Date('2018/06/19'), Vaccinated = 98, Total = 204)
 pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2018/05/18'),98,203)
@@ -180,6 +186,8 @@ dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/07'),0.70)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/14'),0.67)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/21'),0.65)
 dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/01/28'),0.66)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/02/04'),0.55)
+dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2019/02/11'),0.74)
 
 ```
 
@@ -256,11 +264,11 @@ bp_report <- cbindPad(bp_report, bp_other_report)
 
 ```{r plot_bp, warning=FALSE, message=FALSE, echo=FALSE}
 
-ml <- loess(Proportion ~ numericDate, data = bp_report)
+ml <- loess(Proportion ~ numericDate, data = bp_report, span = 0.5)
 m <- augment(ml) #loess localized regression accepts numbers, not dates
 m$Date <- bp_report$Date # but plotly plots require, in this case, dates, not numbers!
 
-ml_p <- loess(pencat_Proportion ~ pencat_numericDate, data = bp_report)
+ml_p <- loess(pencat_Proportion ~ pencat_numericDate, data = bp_report, span = 0.5)
 m_p <- augment(ml_p)
 
 m_p$Date <- bp_report$other_Date[!is.na(bp_report$pencat_Date)]
@@ -307,15 +315,79 @@ p_bp <- bp_report %>%
   layout(title = 'Varicella zoster vaccination
          proportion of 70-79 year olds (Best Practice report)
          coHealth Kensington, 2017-2018',
-         legend = list(x = 0.65, y = 0.3)
+         legend = list(x = 0.35, y = 0.2),
+         shapes = list(type = 'rect', fillcolor = 'purple', line = list(color = 'purple'), opacity = .15,
+                       x0 = '2018-09-27', x1 = '2018-11-09', xref = 'x',
+                       y0 = 0, y1 = .62, yref = 'y') # draw rectangle at time of intervention period
 )
 
-link <- api_create(p_bp, filename = 'zostavax_coverage')
+# link <- api_create(p_bp, filename = 'zostavax_coverage')
 p_bp
 
 
 ```
 
+
+``` {r rdiscontinuity}
+
+begin_intervention <- as.Date('2018-09-27')
+end_intervention <- as.Date('2018-11-09')
+
+zero_date <- begin_intervention + (end_intervention-begin_intervention)/2
+
+bp_discontinuity <- bp_report %>%
+  select(c('Date', 'Vaccinated', 'Total', 'Proportion', 'numericDate')) %>%
+  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
+  mutate(Kensington = TRUE) %>% # these are all Kensington results
+  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
+  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
+
+bp_discontinuity_other <- bp_other_report %>%
+  rename(Proportion = other_Proportion) %>%
+  rename(numericDate = other_numericDate) %>%
+  rename(Date = other_Date) %>%
+  rename(Vaccinated = other_Vaccinated) %>%
+  rename(Total = other_Total) %>%
+  select(c('Date', 'Vaccinated', 'Total', 'Proportion', 'numericDate')) %>%
+  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
+  mutate(Kensington = FALSE) %>% # these are all Kensington results
+  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
+  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
+
+bp_discontinuity <- rbind(bp_discontinuity, bp_discontinuity_other) %>%
+  mutate(Subgroup = paste(ifelse(Kensington, "Kensington", "Other"), " ", ifelse(Post, "Post", "Pre"))) %>%
+  mutate(Subgroup = as.factor(Subgroup))
+
+Model100Days <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
+                    data = bp_discontinuity %>% filter(abs(Months) <= 100/30))
+
+summary(Model100Days)
+
+bp_rd_100 <- bp_discontinuity %>% filter(abs(Months) <= 100/30)
+
+bp_rd_100$fv <- bp_rd_100 %>%
+  lm(Proportion ~ Months*Subgroup, .) %>%
+  fitted.values()
+
+bp_rd_100_plot <- bp_rd_100 %>%
+  plot_ly(x = ~Months, y = ~Proportion,
+          name = '',
+          type = 'scatter', mode = 'markers', color = ~Subgroup) %>%
+  add_trace(x = ~Months, y = ~fv, mode = 'lines', showlegend = FALSE) %>%
+  layout(title = 'Pre-post Zostavax immunization proportion',
+         legend = list(x = 0.6, y = 0.6))
+
+bp_rd_100_plot
+
+```
+
+```{r}
+Model135Days <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
+                    data = bp_discontinuity %>% filter(abs(Months) <= 135/30))
+
+summary(Model135Days)
+
+```
 #### Doctor's Control Panel weekly immunization data {#dcp_proportion}
 
 Doctor's Control Panel (DCP) reports weekly immunization patient data, based on age-eligible (70-79 years old) patients seen each week.
@@ -326,13 +398,13 @@ Plot shows that by late 2017, 50% of age-eligible patients seen week had been or
 
 dcp_report$numericDate <- as.numeric(dcp_report$Date)
 m <- augment(loess(Proportion ~ numericDate,
-                   data = dcp_report))
+                   data = dcp_report, span = 0.7))
 m$Date <- dcp_report$Date
 
 p_dcp <- dcp_report %>%
   plot_ly(x=~Date, y=~Proportion,
           type='scatter', mode='markers') %>%
-  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date))),
+  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date), span = 0.7)),
             line = list(color = 'rgba(7,164,181,1)'),
             showlegend = FALSE) %>%
   add_ribbons(data = m,
@@ -345,9 +417,13 @@ p_dcp <- dcp_report %>%
   layout(title = 'Varicella zoster vaccination
          proportion of 70-79 year olds
          seen in each week (DCP report)
-         coHealth Kensington, 2017-2018')
+         coHealth Kensington, 2017-2018',
+         shapes = list(type = 'rect', fillcolor = 'purple', line = list(color = 'purple'), opacity = .15,
+                       x0 = '2018-09-27', x1 = '2018-11-09', xref = 'x',
+                       y0 = 0, y1 = .9, yref = 'y')
+)
 
-link <- api_create(p_dcp, filename = 'zostavax_dcp')
+# link <- api_create(p_dcp, filename = 'zostavax_dcp')
 p_dcp
 
 ```
