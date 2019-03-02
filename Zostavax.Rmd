@@ -315,7 +315,10 @@ p_bp <- bp_report %>%
   layout(title = 'Varicella zoster vaccination
          proportion of 70-79 year olds (Best Practice report)
          coHealth Kensington, 2017-2018',
-         legend = list(x = 0.65, y = 0.3)
+         legend = list(x = 0.35, y = 0.2),
+         shapes = list(type = 'rect', fillcolor = 'purple', line = list(color = 'purple'), opacity = .15,
+                       x0 = '2018-09-27', x1 = '2018-11-09', xref = 'x',
+                       y0 = 0, y1 = .62, yref = 'y') # draw rectangle at time of intervention period
 )
 
 link <- api_create(p_bp, filename = 'zostavax_coverage')
@@ -334,13 +337,13 @@ Plot shows that by late 2017, 50% of age-eligible patients seen week had been or
 
 dcp_report$numericDate <- as.numeric(dcp_report$Date)
 m <- augment(loess(Proportion ~ numericDate,
-                   data = dcp_report, span = 0.6))
+                   data = dcp_report, span = 0.7))
 m$Date <- dcp_report$Date
 
 p_dcp <- dcp_report %>%
   plot_ly(x=~Date, y=~Proportion,
           type='scatter', mode='markers') %>%
-  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date), span = 0.6)),
+  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date), span = 0.7)),
             line = list(color = 'rgba(7,164,181,1)'),
             showlegend = FALSE) %>%
   add_ribbons(data = m,
@@ -353,7 +356,11 @@ p_dcp <- dcp_report %>%
   layout(title = 'Varicella zoster vaccination
          proportion of 70-79 year olds
          seen in each week (DCP report)
-         coHealth Kensington, 2017-2018')
+         coHealth Kensington, 2017-2018',
+         shapes = list(type = 'rect', fillcolor = 'purple', line = list(color = 'purple'), opacity = .15,
+                       x0 = '2018-09-27', x1 = '2018-11-09', xref = 'x',
+                       y0 = 0, y1 = .9, yref = 'y')
+)
 
 link <- api_create(p_dcp, filename = 'zostavax_dcp')
 p_dcp
