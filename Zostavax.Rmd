@@ -264,11 +264,11 @@ bp_report <- cbindPad(bp_report, bp_other_report)
 
 ```{r plot_bp, warning=FALSE, message=FALSE, echo=FALSE}
 
-ml <- loess(Proportion ~ numericDate, data = bp_report)
+ml <- loess(Proportion ~ numericDate, data = bp_report, span = 0.5)
 m <- augment(ml) #loess localized regression accepts numbers, not dates
 m$Date <- bp_report$Date # but plotly plots require, in this case, dates, not numbers!
 
-ml_p <- loess(pencat_Proportion ~ pencat_numericDate, data = bp_report)
+ml_p <- loess(pencat_Proportion ~ pencat_numericDate, data = bp_report, span = 0.5)
 m_p <- augment(ml_p)
 
 m_p$Date <- bp_report$other_Date[!is.na(bp_report$pencat_Date)]
@@ -334,13 +334,13 @@ Plot shows that by late 2017, 50% of age-eligible patients seen week had been or
 
 dcp_report$numericDate <- as.numeric(dcp_report$Date)
 m <- augment(loess(Proportion ~ numericDate,
-                   data = dcp_report))
+                   data = dcp_report, span = 0.6))
 m$Date <- dcp_report$Date
 
 p_dcp <- dcp_report %>%
   plot_ly(x=~Date, y=~Proportion,
           type='scatter', mode='markers') %>%
-  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date))),
+  add_lines(y = ~fitted(loess(Proportion ~ as.numeric(Date), span = 0.6)),
             line = list(color = 'rgba(7,164,181,1)'),
             showlegend = FALSE) %>%
   add_ribbons(data = m,
