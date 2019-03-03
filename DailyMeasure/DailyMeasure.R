@@ -7,6 +7,7 @@ library(shinyjs)
 library(shinydashboard)
 library(shinydashboardPlus) # version 0.6.0+ preferred (development version as of Feb/2019)
 library(shinyWidgets)
+library(shinyFiles) # file-picker. currently depends on development version 0.7.2
 
 library(tidyverse)
 library(dbplyr)  # database interaction for dplyr
@@ -21,89 +22,6 @@ library(DT)         # pretty-print tables/tibbles
 library(lubridate)  # time handling library
 
 library(DTedit)     # datatable edit wrapper. install with devtools::install_github('jbryer/DTedit')
-
-# read config files
-
-local_config <- NULL
-config_pool <- NULL
-
-if (is.yaml.file('./DailyMeasure_cg.yaml')) {
-  # if config file exists and is a YAML-type file
-  local_config <- read.config("./DailyMeasure_cfg.yaml") #  config in local location
-} else {
-  # local config file does not exist. possibly first-run
-  local_config <- list()
-  local_config$config_file <- c("./DailyMeasure_cfg.sqlite") # main configuration file, could be set to 'common location'
-  # write the (minimalist) local config file
-  write.config(local_config, file.path = "./DailyMeasure_cfg.yaml", write.type = "yaml")
-}
-
-if (file.exists(local_config$config_file)) {
-  config_pool <- tryCatch(dbPool(RSQLite::SQLite(), dbname = local_config$config_file),
-                          error = function(e) {NULL})
-} else {
-  # if the config database doesn't exist, then create it (note create = TRUE option)
-  config_pool <- tryCatch(dbPool(RSQLite::SQLite(), dbname = local_config$config_file, create = TRUE),
-                          error = function(e) {NULL})
-  # create table 'Server' to hold Server settings (this table will hold only one row)
-  dbWriteTable(config_pool, "Server",
-               data.frame(Address=character(), Database=character(),
-                          UserID=character(), dbPassword=character()))
-  # create table 'Location' to hold Location settings
-  dbWriteTable(config_pool, "Location",
-               data.frame(Name = character(), Description = character(), stringsAsFactors = FALSE))
-  # create table 'Users' to hold user settings
-  dbWriteTable(config_pool, "Users",
-               data.frame(Fullname = character(), AuthIdentity = character(), Location = character(),
-                          Globalview = logical(), Expert = logical(), Admin = logical(),
-                          stringsAsFactors = FALSE))
-}
-
-BPdatabase <- config_pool %>% tbl("Server")
-PracticeLocations <- config_pool %>% tbl("Location")
-UserConfig <- config_pool %>% tbl("Users")
-
-poolClose(config_pool)
-
-if (is.yaml.file('./DailyDash_cfg.yaml')) {
-  # if config file exists and is a YAML-type file
-  config <- read.config('./DailyDash_cfg.yaml')
-} else {
-  config <- list()
-  
-  config$server <- c('127.0.0.1\\BPSINSTANCE') # Note that 'true' server name includes a single backslash
-  # in this string, the backslash is 'escaped' into a double backslash
-  config$database <- c('BPSSamples')
-  filename <- 'BestPracticeSQL_password.txt'
-  config$dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
-  
-  # config$server <-  character()       # e.g. '127.0.0.1\\BPSINSTANCE'
-  # config$database <-  character()     # e.g. 'BPSSamples' for samples database
-  config$userid <-  c('bpsrawdata')   # database user ID
-  # config$dbpassword <-  character()   # password for the database user
-  config$practice_locations <-  data.frame(Name = character(), Description = character(),
-                                           stringsAsFactors = FALSE) 
-  
-  #config$practice_locations <-  data.frame(Name = character(), Description = character(),
-  #                                         stringsAsFactors = FALSE) 
-  # list of practice locations, or practitioner groups
-  config$users <- data.frame(Fullname = character(),
-                             AuthIdentity = character(),  # authentication identity
-                             Location = character(),
-                             Expert = logical(),         # expert options available
-                             Globalview = logical(),     # able to view all users
-                             Admin = logical(),          # able to change major system settings
-                             stringsAsFactors = FALSE)  
-}
-
-# initial database setup
-
-pool <- tryCatch(dbPool(odbc::odbc(), driver = "SQL Server",
-                        server = config$server, database = config$database,
-                        uid = config$userid, pwd = config$dbpassword),
-                 error = function(e) {NULL}
-)
-
 
 # function setup
 
@@ -307,6 +225,26 @@ ui <- dashboardPagePlus(
                   width = 12,
                   height = "85vh",
                   tabPanel(
+                    # sqlite configuration file location
+                    # this is stored in a YAML file
+                    # allows a 'local' user to use a remote configuration file
+                    title = "Configuration file",
+                    column(width=12,
+                           wellPanel(
+                             textOutput('configuration_file_details') # location of sqlite configuration file
+                           ),
+                           wellPanel(
+                             shinyFilesButton('choose_configuration_file', label = 'Choose configuration file',
+                                              title = "Choose configuration file (must end in '.sqlite')",
+                                              multiple = FALSE),
+                             #actionButton('choose_configuration_file', 'Choose configuration file', icon('refresh'),
+                            #              class = 'btn btn-primary'),
+                             actionButton('create_configuration_file', 'Create configuration file',
+                                          class = 'btn btn-primary'),
+                             helpText("Choose location of an existing configuration file, or create a new configuration file")
+                           ))
+                  ),
+                  tabPanel(
                     # Microsoft SQL server details
                     title = "Microsoft SQL Server details",
                     column(width=12,
@@ -314,7 +252,7 @@ ui <- dashboardPagePlus(
                              uiOutput('server_details'),
                              actionButton('update_database', 'Update', icon('refresh'), class = 'btn btn-primary'),
                              # Database details not changed until the 'Update' button is clicked
-                             helpText("After adjusting datebase details, click the 'Update' button")
+                             helpText("After adjusting database details, click the 'Update' button")
                            ))),
                   tabPanel(
                     # Practice locations or groups
@@ -342,6 +280,98 @@ ui <- dashboardPagePlus(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  
+  # read config files
+  
+  local_config <- reactiveValues(config_file = character())
+  config_pool <- reactiveVal()
+  configuration_file_path <- reactiveVal()
+  BPdatabase <- reactiveVal()
+  PracticeLocations <- reactiveVal()
+  UserConfig <- reactiveVal()
+  
+  if (is.yaml.file('./DailyMeasure_cfg.yaml')) {
+    # if config file exists and is a YAML-type file
+    local_config <- read.config("./DailyMeasure_cfg.yaml") #  config in local location
+  } else {
+    # local config file does not exist. possibly first-run
+    # local_config <- list()
+    local_config$config_file <- c("./DailyMeasure_cfg.sqlite") # main configuration file, could be set to 'common location'
+    # write the (minimalist) local config file
+    write.config(local_config, file.path = "./DailyMeasure_cfg.yaml", write.type = "yaml")
+  }
+  
+  configuration_file_path(local_config$config_file)
+  
+  observeEvent(configuration_file_path(), ignoreNULL = TRUE, {
+    if (file.exists(isolate(configuration_file_path()))) {
+      config_pool(tryCatch(dbPool(RSQLite::SQLite(), dbname = isolate(configuration_file_path())),
+                               error = function(e) {NULL}))
+    } else {
+      # if the config database doesn't exist, then create it (note create = TRUE option)
+      config_pool(tryCatch(dbPool(RSQLite::SQLite(), dbname = isolate(configuration_file_path()), create = TRUE),
+                               error = function(e) {NULL}))
+      # create table 'Server' to hold Server settings (this table will hold only one row)
+      dbWriteTable(config_pool(), "Server",
+                   data.frame(Address=character(), Database=character(),
+                              UserID=character(), dbPassword=character()))
+      # create table 'Location' to hold Location settings
+      dbWriteTable(config_pool(), "Location",
+                   data.frame(Name = character(), Description = character(), stringsAsFactors = FALSE))
+      # create table 'Users' to hold user settings
+      dbWriteTable(config_pool(), "Users",
+                   data.frame(Fullname = character(), AuthIdentity = character(), Location = character(),
+                              Globalview = logical(), Expert = logical(), Admin = logical(),
+                              stringsAsFactors = FALSE))
+    }
+  })
+  
+  observeEvent(config_pool(), ignoreNULL = TRUE, {
+    BPdatabase(isolate(config_pool()) %>% tbl("Server"))
+    PracticeLocations(isolate(config_pool()) %>% tbl("Location"))
+    UserConfig(isolate(config_pool()) %>% tbl("Users"))
+  })
+  
+  # poolClose(isolate(config_pool()))
+  
+  if (is.yaml.file('./DailyDash_cfg.yaml')) {
+    # if config file exists and is a YAML-type file
+    config <- read.config('./DailyDash_cfg.yaml')
+  } else {
+    config <- list()
+    
+    config$server <- c('127.0.0.1\\BPSINSTANCE') # Note that 'true' server name includes a single backslash
+    # in this string, the backslash is 'escaped' into a double backslash
+    config$database <- c('BPSSamples')
+    filename <- 'BestPracticeSQL_password.txt'
+    config$dbpassword <- rawToChar(base64decode(readChar(filename,file.info(filename)$size)))
+    
+    # config$server <-  character()       # e.g. '127.0.0.1\\BPSINSTANCE'
+    # config$database <-  character()     # e.g. 'BPSSamples' for samples database
+    config$userid <-  c('bpsrawdata')   # database user ID
+    # config$dbpassword <-  character()   # password for the database user
+    config$practice_locations <-  data.frame(Name = character(), Description = character(),
+                                             stringsAsFactors = FALSE) 
+    
+    #config$practice_locations <-  data.frame(Name = character(), Description = character(),
+    #                                         stringsAsFactors = FALSE) 
+    # list of practice locations, or practitioner groups
+    config$users <- data.frame(Fullname = character(),
+                               AuthIdentity = character(),  # authentication identity
+                               Location = character(),
+                               Expert = logical(),         # expert options available
+                               Globalview = logical(),     # able to view all users
+                               Admin = logical(),          # able to change major system settings
+                               stringsAsFactors = FALSE)  
+  }
+  
+  # initial database setup
+  
+  pool <- tryCatch(dbPool(odbc::odbc(), driver = "SQL Server",
+                          server = config$server, database = config$database,
+                          uid = config$userid, pwd = config$dbpassword),
+                   error = function(e) {NULL}
+  )
   
   db <- reactiveValues()
   db$version <- 0
@@ -444,8 +474,6 @@ server <- function(input, output, session) {
     if (!is.null(config$practice_locations)) {
       locations <- rbind(locations, config$practice_locations %>% select(c('Name')) %>% unique())
     }
-    cat(file = stderr(), "location_list")
-    cat(file = stderr(), locations$Name)
     return(locations$Name)
   }
   
@@ -456,9 +484,8 @@ server <- function(input, output, session) {
   # list of clinicians shown depends on 'practice location' chosen
   clinician_choice_list <- reactiveVal()
   
-  observeEvent(c(
-    db$dbversion,
-    input$location),
+  observeEvent(
+    c(db$dbversion, input$location),
     {
       if (!is.null(input$location)) { # only if initialized
         clinician_choice_list(
@@ -765,8 +792,37 @@ server <- function(input, output, session) {
                                         escape = FALSE,
                                         fillContainer = FALSE)})
   
-  # database configuration tab
+
+  # configuration file location tab
   
+  output$configuration_file_details <- renderText({
+    paste('Configuration file location: "', configuration_file_path(), '"')
+  })
+
+  volumes <- c(getVolumes()(), base = '.', home = Sys.getenv("USERPROFILE"))
+
+  shinyFileChoose(input, id = 'choose_configuration_file',
+                  session = session,
+                  roots = volumes,
+                  filetypes = c('sqlite') # only files ending in '.sqlite'
+  )
+  
+  observeEvent(ignoreNULL = TRUE,input$choose_configuration_file, {
+    if (!is.integer(input$choose_configuration_file)) {
+      # if input$choose_configuration_file is an integer, it is just the 'click' event on the filechoose button
+      inFile <- parseFilePaths(volumes, input$choose_configuration_file)
+      file_name <- paste(inFile$datapath)
+      configuration_file_path(file_name)
+    }
+  })
+  
+  observe({
+    # change local_config when configuration path changes
+    local_config$config_file <<- configuration_file_path() # need to use <<- operator
+  })
+                                                    
+  # database configuration tab
+    
   output$server_details <- renderUI({
     tagList(
       textInput('server_address', 'Server address', config$server),
@@ -775,7 +831,6 @@ server <- function(input, output, session) {
       textInput('database_password', 'Database password', config$dbpassword)
       )
   })
-
   
   update_database_details <- observeEvent(input$update_database, {
     tmp_pool <- tryCatch(dbPool(odbc::odbc(), driver = "SQL Server",
