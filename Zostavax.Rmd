@@ -1,6 +1,6 @@
 ---
 title: "Zostavax immunization against herpes zoster, Kensington 2017-2018"
-abstract: Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Immunization against herpes zoster reduces the occurrence of the disease. This project measures the proportion of eligible patients at the Kensington site vaccinated against herpes zoster over 2017-2018. A mechanism to further increase immunization coverage is proposed. The techniques used in this project are generalizable to other practice quality improvement activities.
+abstract: Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Immunization against herpes zoster reduces the occurrence of the disease. This project measures the proportion of eligible patients at the Kensington site vaccinated against herpes zoster over 2017-2018. A mechanism was used to opportunistically increase immunization coverage among patients already booked to see health care providers for other reasons. During six-week intervention ('treatment') period, immunization coverage improved by an estimated 8.9% (50.8% to 59.7%). The techniques used in this project are generalizable to other practice quality improvement activities.
 
 author: '[David Fong](http://www.davidfong.info)'
 
@@ -11,32 +11,41 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(broom)
-library(plotly)
+library(plotly) # provide plots
+library(sjPlot) # pretty regression table printing
 ```
 
-### Synopsis and proposal
+## Synopsis
 
 Shingles is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Although treatment is available for herpes zoster, particularly if detected early, immunization can reduce the risk of contracting the disease.
 
-The currently available shingles vaccine in Australia, Zostavax, can reduce the incidence of herpes zoster in the 70-79 year year age group by 41%[^1].
+The currently available shingles vaccine in Australia, Zostavax, can reduce the incidence of herpes zoster in the 70-79 year year age group by 41%[^1] to 62%, and 70-88% reduction against postherpetic neuralgia[^2]. Approximately 1 person per 100 per year contracts shingles, and 1 person per 1000 per year suffers from postherpetic neuralgia (pain persisting beyond 90 days from rash onset) in this age group.
 
 [^1]: Australian Immunization Handbook - <https://immunisationhandbook.health.gov.au/vaccine-preventable-diseases/zoster-herpes-zoster>
 
-Varicella immunization is recommended and funded by the Australian Government for people aged 70 years to reduce the risk of shingles (herpes zoster). Until 30 October 2021, a single catch-up dose is available for adults aged 71 to 79 years inclusive[^2].
+[^2]: <a href="https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(17)30234-7/fulltext">Evaluation of the effect of the herpes zoster vaccination programme 3 years after its introduction in England: a population-based study. Amirthalingam et al. The Lancet, Vol 3, Issue 2, PE82-E90, February 01, 2018.</a>
 
-[^2]: National Immunisation Program Schedule - https://beta.health.gov.au/health-topics/immunisation/immunisation-throughout-life/national-immunisation-program-schedule
+Varicella immunization is recommended and funded by the Australian Government for people aged 70 years to reduce the risk of shingles (herpes zoster). Until 30 October 2021, a single catch-up dose is available for adults aged 71 to 79 years inclusive[^3].
+
+[^3]: National Immunisation Program Schedule - https://beta.health.gov.au/health-topics/immunisation/immunisation-throughout-life/national-immunisation-program-schedule
 
 The proportion of eligible 70-79 year olds who have been immunized against Zostavax has steadily increased to 50% of the target population at the Kensington site of coHealth, but [has been static from May to September 2018](#bp_proportion). Current [weekly immunization data](#dcp_proportion) has also been static at 50% since late 2018, suggesting that without additional measures the immunization proportion is unlikely to significantly improve.
 
-As approximately 50% of eligible patients each week seen at the practice leave without a record of immunization, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
+A semi-automated daily database search was used to case-find eligible patients who were already booked into see a healthcare provider during the intervention ('treatment') period from 27th September 2018 to 9th November 2018. The list of eligible patients was distributed to healthcare provider. During the treatment period itself, there was an estimated 8.9% (95% confidence interval 5.7% to 12%) increase in Zostavax immunization coverage among 200 eligible patients, equivalent to about 18 extra patients immunized against shingles. There was a tendency towards positive effects on Zostavax immunization coverage for two months after the end of the treatment period.
 
-A [Best Practice SQL script](SQLnovax) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnovax). It was proposed to identify patients at the beginning of each day for a month and continue to evaluate the proportion of eligible patients immunized against shingles. This was done from 27th September 2018 to 9th November 2018 inclusive.
+## Method
+
+As approximately 50% of eligible patients each week seen at the practice leave without a record of immunization, it was proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
+
+A [Best Practice SQL script](SQLnovax) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnovax). Eligible patients were identified at the beginning of each day for a month, and reminders set to clinicians (nurses and doctors) that these patients were eligible. This was done from 27th September 2018 to 9th November 2018 inclusive, the intervention ('treatment') period.
 
 Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
 
-### Data
+## Data
 
 Best Practice (up to February 2019) and PenCAT (up to June 2018) provide data of proportion of 'active' patients immunized against herpes zoster. Patients are defined as 'active' if they have three contacts over two years. Some 'contacts' may be trivial, e.g. correspondence and telephone contacts with third parties.
+
+During the period January 2017 to March 2019, the number of active eligible patients increased at the Kensington site from 200 to 213 patients. During the same period, the number of active eligible patients at 'Other (non-Kensington sites of coHealth)' increased from 612 to 719 patients.
 
 Weekly Doctor's Control panel (DCP) data, August 2017 to February 2019, provides data of proportion of contacted patients immunized against herpes zoster. DCP data is weekly contact data, where a contact is defined as where a billing has occurred.
 
@@ -227,12 +236,15 @@ cbindPad <- function(...){
 
 The proportion of active patients aged 70-79 years who have a record of shingles vaccination at each time period.
 
-Main data source is extracted using [SQL code](SQLzno) in Best Practice[^3].
+Main data source is extracted using [SQL code](SQLzno) in Best Practice[^4].
 
-[^3]: Similar data is available from PenCAT, which is also plotted for comparison purposes. Accurate PenCAT data not available after June 2018, because PenCAT does not recognize varicella zoster immunization which had been migrated from one clinical software (Medical Director 3) to another (Best Practice). The clinical software migration occurred in June 2018.
+[^4]: Similar data is available from PenCAT, which is also plotted for comparison purposes. Accurate PenCAT data not available after June 2018, because PenCAT does not recognize varicella zoster immunization which had been migrated from one clinical software (Medical Director 3) to another (Best Practice). The clinical software migration occurred in June 2018.
 
 Proportion of patients recorded as having been immunized steadily increased from less than 15% in January 2017 to 50% in May 2018.  Since May 2018, the proportion immunized remained steady/flat at 50% until September 2018.
 
+The intervention ('treatment') period, 27th September to 9th November 2018 (44 days), is shaded in purple in the plots below.
+
+\
 
 ```{r data_manipulate, include=FALSE}
 pencat_report <- pencat_report %>%
@@ -327,72 +339,14 @@ p_bp
 
 ```
 
-
-``` {r rdiscontinuity}
-
-begin_intervention <- as.Date('2018-09-27')
-end_intervention <- as.Date('2018-11-09')
-
-zero_date <- begin_intervention + (end_intervention-begin_intervention)/2
-
-bp_discontinuity <- bp_report %>%
-  select(c('Date', 'Vaccinated', 'Total', 'Proportion', 'numericDate')) %>%
-  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
-  mutate(Kensington = TRUE) %>% # these are all Kensington results
-  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
-  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
-
-bp_discontinuity_other <- bp_other_report %>%
-  rename(Proportion = other_Proportion) %>%
-  rename(numericDate = other_numericDate) %>%
-  rename(Date = other_Date) %>%
-  rename(Vaccinated = other_Vaccinated) %>%
-  rename(Total = other_Total) %>%
-  select(c('Date', 'Vaccinated', 'Total', 'Proportion', 'numericDate')) %>%
-  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
-  mutate(Kensington = FALSE) %>% # these are all Kensington results
-  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
-  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
-
-bp_discontinuity <- rbind(bp_discontinuity, bp_discontinuity_other) %>%
-  mutate(Subgroup = paste(ifelse(Kensington, "Kensington", "Other"), " ", ifelse(Post, "Post", "Pre"))) %>%
-  mutate(Subgroup = as.factor(Subgroup))
-
-Model100Days <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
-                    data = bp_discontinuity %>% filter(abs(Months) <= 100/30))
-
-summary(Model100Days)
-
-bp_rd_100 <- bp_discontinuity %>% filter(abs(Months) <= 100/30)
-
-bp_rd_100$fv <- bp_rd_100 %>%
-  lm(Proportion ~ Months*Subgroup, .) %>%
-  fitted.values()
-
-bp_rd_100_plot <- bp_rd_100 %>%
-  plot_ly(x = ~Months, y = ~Proportion,
-          name = '',
-          type = 'scatter', mode = 'markers', color = ~Subgroup) %>%
-  add_trace(x = ~Months, y = ~fv, mode = 'lines', showlegend = FALSE) %>%
-  layout(title = 'Pre-post Zostavax immunization proportion',
-         legend = list(x = 0.6, y = 0.6))
-
-bp_rd_100_plot
-
-```
-
-```{r}
-Model135Days <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
-                    data = bp_discontinuity %>% filter(abs(Months) <= 135/30))
-
-summary(Model135Days)
-
-```
 #### Doctor's Control Panel weekly immunization data {#dcp_proportion}
 
-Doctor's Control Panel (DCP) reports weekly immunization patient data, based on age-eligible (70-79 years old) patients seen each week.
+Doctor's Control Panel (DCP) reports weekly immunization patient data, based on age-eligible (70-79 years old) patients seen each week. The number of eligible patients seen each week is relatively small, accounting for the observed wide week-to-week variation in immunization coverage proportions.
 
 Plot shows that by late 2017, 50% of age-eligible patients seen week had been or were vaccinated against varicella zoster.  This proportion has remained the same up to September 2018.
+
+
+\
 
 ```{r plot_dcp, warning=FALSE, message=FALSE, echo=FALSE}
 
@@ -428,9 +382,117 @@ p_dcp
 
 ```
 
-### SQL code for Best Practice
+``` {r rdiscontinuity, echo = FALSE}
 
-#### Number of 'active' patients aged 70-79 years immunized against Zostavax {#SQLzno}
+begin_intervention <- as.Date('2018-09-27')
+end_intervention <- as.Date('2018-11-09')
+
+zero_date <- begin_intervention + (end_intervention-begin_intervention)/2
+
+bp_discontinuity <- bp_report %>%
+  select(c('Date', 'Vaccinated', 'Total', 'Proportion', 'numericDate')) %>%
+  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
+  mutate(Kensington = TRUE) %>% # these are all Kensington results
+  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
+  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
+
+bp_discontinuity_other <- bp_other_report %>%
+  rename(Proportion = other_Proportion) %>%
+  rename(numericDate = other_numericDate) %>%
+  rename(Date = other_Date) %>%
+  rename(Vaccinated = other_Vaccinated) %>%
+  rename(Total = other_Total) %>%
+  select(c('Date', 'Vaccinated', 'Total', 'Proportion', 'numericDate')) %>%
+  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
+  mutate(Kensington = FALSE) %>% # these are all Kensington results
+  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
+  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
+
+bp_discontinuity <- rbind(bp_discontinuity, bp_discontinuity_other) %>%
+  mutate(Subgroup = paste(ifelse(Kensington, "Kensington", "Other (Control)"), ifelse(Post, "Post-Treatment", "Pre-Treatment"))) %>%
+  mutate(Subgroup = as.factor(Subgroup))
+
+bp_rd_100 <- bp_discontinuity %>% filter(abs(Months) <= 100/30)
+
+bp_rd_100$fv <- bp_rd_100 %>%
+  lm(Proportion ~ Months*Subgroup, .) %>%
+  fitted.values()
+
+```
+
+## Results
+
+The plots above suggest the project increased the proportion of patients immunized during the study period, by a degree exceeding the previous increase in immunization rate in the few months prior to 2018. The increase in proportion of patients immunized also exceeded the rate of increased immunization proportion in other, comparable, coHealth medical clinics during the same time period.
+
+A regression discontinuity plot of immunization proportion is shown below, centred around the middle of the intervention ('treatment') time period (`r toString(zero_date)`), up to 100 days (approximately 3 months) before and after the middle of the treatment period, and not including immunization proportions during the treatment period itself (27th September to 9th November 2018).
+
+\
+
+```{r echo=FALSE}
+
+bp_rd_100_plot <- bp_rd_100 %>%
+  plot_ly(x = ~Months, y = ~Proportion,
+          name = '',
+          type = 'scatter', mode = 'markers', color = ~Subgroup) %>%
+  add_trace(x = ~Months, y = ~fv, mode = 'lines', showlegend = FALSE) %>%
+  layout(title = 'Pre-post Zostavax immunization proportion',
+         legend = list(x = 0.6, y = 0.6))
+bp_rd_100_plot
+
+```
+
+```{r echo = FALSE}
+Model100Days <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
+                    data = bp_discontinuity %>% filter(abs(Months) <= 100/30))
+
+Model135Days <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
+                    data = bp_discontinuity %>% filter(abs(Months) <= 135/30))
+```
+
+### Regression analysis
+
+Linear regression analysis, with interaction effects, shown in table below.
+
+The 'discontinuity' of the Kensington vaccinated proportion at 'day zero' (`r toString(zero_date)`) is significant, with a jump of `r toString(signif(summary(Model100Days)$coefficients[['KensingtonTRUE:PostTRUE', 'Estimate']]*100, 3))`% (standard error `r toString(signif(summary(Model100Days)$coefficients[['KensingtonTRUE:PostTRUE', 'Std. Error']]*100, 3))`%, p-value `r toString(signif(summary(Model100Days)$coefficients[['KensingtonTRUE:PostTRUE', 'Pr(>|t|)']], 3))`).
+
+Following the treatment period, the rate of immunization coverage per months was not inferior to prior to the intervention in the '200-day model' (100 days prior to and after `r toString(zero_date)`). There was a tendency for the immunization rate to be slightly better than pre-treatment immunization coverage rate (+`r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Estimate']]*100, 3))`%/month, standard error `r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Std. Error']]*100, 2))`%/month, p-value `r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Pr(>|t|)']], 2))`).
+
+This positive tendency is negligible in the '270-day model' (135 days prior to and after `r toString(zero_date)`), suggesting diminishing effect of the treatment, two months after the end of the treatment period.
+
+\
+
+```{r echo = FALSE}
+
+tab_model(Model100Days, Model135Days,
+          title = "Proportion immunized against shingles - Linear Regression model",
+          digits = 4,
+          dv.labels = c("200-day model", "270-day model"),
+          pred.labels = c("(Intercept)", "Months",
+                          "Kensington Clinic",
+                          "Post-treatment",
+                          "Months X Kensington",
+                          "Months X Post-treatment",
+                          "Kensington X Post",
+                          "Months X Kensington X Post"))
+
+```
+
+### Impact
+
+During the treatment period itself, estimated 8.9% (95% confidence interval 5.7% to 12%) increase in Zostavax coverage rate among 200 eligible patients, equivalent to about 18 extra patients immunized against shingles.
+
+Given the effectivness of the vaccine, the immediate impact of this treatment is estimated to be approximately 0.1 less episodes of shingles per year among active patients in the eligible patient population. This may be an underestimate of the overall treatment effect, given that there is a tendency for a positive effect on immunization after the treatment program ended.
+
+Nevertheless, there may be additional benefit after repeated treatments, though methods may need further refinement to better target the 'unreached' target population.
+
+\
+
+```{r}
+```
+
+## SQL code for Best Practice
+
+### Number of 'active' patients aged 70-79 years immunized against Zostavax {#SQLzno}
 
 ```{sql eval=FALSE}
 SELECT *
@@ -469,7 +531,7 @@ AND InternalID IN (SELECT InternalID
 ORDER BY surname, firstname
 ```
 
-#### Identify booked patients without record of Zostavax immunization {#SQLnovax}
+### Identify booked patients without record of Zostavax immunization {#SQLnovax}
 
 ```{sql eval=FALSE}
 SELECT *
