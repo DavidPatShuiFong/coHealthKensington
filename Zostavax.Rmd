@@ -483,7 +483,7 @@ During the treatment period itself, estimated 8.9% (95% confidence interval 5.7%
 
 Given the effectivness of the vaccine, the immediate impact of this treatment is estimated to be approximately 0.1 less episodes of shingles per year among active patients in the eligible patient population. This may be an underestimate of the overall treatment effect, given that there is a tendency for a positive effect on immunization after the treatment program ended.
 
-Nevertheless, there may be additional benefit after repeated treatments, though methods may need further refinement to better target the 'unreached' target population.
+There may be additional benefit after repeated treatments, though methods may need further refinement to better target the 'unreached' target population.
 
 \
 
