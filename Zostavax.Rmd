@@ -1,10 +1,18 @@
 ---
-title: "Zostavax immunization against herpes zoster, Kensington 2017-2018"
-abstract: Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Immunization against herpes zoster reduces the occurrence of the disease. This project measures the proportion of eligible patients at the Kensington site vaccinated against herpes zoster over 2017-2018. A mechanism was used to opportunistically increase immunization coverage among patients already booked to see health care providers for other reasons. During six-week intervention ('treatment') period, immunization coverage improved by an estimated 8.9% (50.8% to 59.7%). The techniques used in this project are generalizable to other practice quality improvement activities.
-
+title: "Zostavax immunization against herpes zoster, Kensington 2018"
 author: '[David Fong](http://www.davidfong.info)'
-
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+  always_allow_html: yes
+  
+abstract: Herpes zoster (shingles) is a painful, debilitating and sometimes dangerous
+  re-activation of varicella zoster virus. Immunization against herpes zoster reduces
+  the occurrence of the disease. This project employed a method to identify and opportunistically
+  immunize eligible patients already booked to see health care providers for other
+  reasons. During the six-week intervention ('treatment') period, immunization coverage
+  improved by an estimated 8.9% (50.8% to 59.7%). The techniques used in this project
+  are generalizable to other practice quality improvement activities.
 ---
 
 ```{r setup, include=FALSE}
@@ -19,7 +27,7 @@ library(sjPlot) # pretty regression table printing
 
 Shingles is a painful, debilitating and sometimes dangerous re-activation of varicella zoster virus. Although treatment is available for herpes zoster, particularly if detected early, immunization can reduce the risk of contracting the disease.
 
-The currently available shingles vaccine in Australia, Zostavax, can reduce the incidence of herpes zoster in the 70-79 year year age group by 41%[^1] to 62%, and 70-88% reduction against postherpetic neuralgia[^2]. Approximately 1 person per 100 per year contracts shingles, and 1 person per 1000 per year suffers from postherpetic neuralgia (pain persisting beyond 90 days from rash onset) in this age group.
+The currently available shingles vaccine in Australia, Zostavax, can reduce the incidence of herpes zoster in the 70-79 year year age group by 41%[^1] to 62%, and 70-88% reduction of postherpetic neuralgia[^2]. Approximately 1 person per 100 per year contracts shingles, and 1 person per 1000 per year suffers from postherpetic neuralgia (pain persisting beyond 90 days from rash onset) in this age group.
 
 [^1]: Australian Immunization Handbook - <https://immunisationhandbook.health.gov.au/vaccine-preventable-diseases/zoster-herpes-zoster>
 
@@ -29,15 +37,15 @@ Varicella immunization is recommended and funded by the Australian Government fo
 
 [^3]: National Immunisation Program Schedule - https://beta.health.gov.au/health-topics/immunisation/immunisation-throughout-life/national-immunisation-program-schedule
 
-The proportion of eligible 70-79 year olds who have been immunized against Zostavax has steadily increased to 50% of the target population at the Kensington site of coHealth, but [has been static from May to September 2018](#bp_proportion). Current [weekly immunization data](#dcp_proportion) has also been static at 50% since late 2018, suggesting that without additional measures the immunization proportion is unlikely to significantly improve.
+The proportion of eligible 70-79 year olds who have been immunized against Zostavax had steadily increased to 50% of the target population at the Kensington site of coHealth, but [had been static from June to September 2018](#bp_proportion). [Weekly immunization proportions](#dcp_proportion) was static at 50% since early 2018, suggesting that without additional measures the immunization proportion was unlikely to significantly improve.
 
-A semi-automated daily database search was used to case-find eligible patients who were already booked into see a healthcare provider during the intervention ('treatment') period from 27th September 2018 to 9th November 2018. The list of eligible patients was distributed to healthcare provider. During the treatment period itself, there was an estimated 8.9% (95% confidence interval 5.7% to 12%) increase in Zostavax immunization coverage among 200 eligible patients, equivalent to about 18 extra patients immunized against shingles. There was a tendency towards positive effects on Zostavax immunization coverage for two months after the end of the treatment period.
+A semi-automated daily database search was used to case-find eligible patients who were already booked into see a healthcare provider during the intervention ('treatment') period from 27th September 2018 to 9th November 2018. The list of eligible patients was distributed to healthcare providers. During the treatment period itself, there was an estimated 8.9% (95% confidence interval 5.7% to 12%) increase in Zostavax immunization coverage among 200 eligible patients, equivalent to about 18 extra patients immunized against shingles. There was a tendency towards positive effects on Zostavax immunization coverage for two months after the end of the treatment period.
 
 ## Method
 
-As approximately 50% of eligible patients each week seen at the practice leave without a record of immunization, it was proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
+As approximately 50% of eligible patients each week seen at the practice left without a record of immunization, it was proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
 
-A [Best Practice SQL script](SQLnovax) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnovax). Eligible patients were identified at the beginning of each day for a month, and reminders set to clinicians (nurses and doctors) that these patients were eligible. This was done from 27th September 2018 to 9th November 2018 inclusive, the intervention ('treatment') period.
+A [Best Practice SQL script](SQLnovax) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnovax). Eligible patients were identified at the beginning of each day for a month, and reminders sent to clinicians (nurses and doctors) that these patients were eligible. This was done from 27th September 2018 to 9th November 2018 inclusive, the intervention ('treatment') period.
 
 Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
 
@@ -343,7 +351,7 @@ p_bp
 
 Doctor's Control Panel (DCP) reports weekly immunization patient data, based on age-eligible (70-79 years old) patients seen each week. The number of eligible patients seen each week is relatively small, accounting for the observed wide week-to-week variation in immunization coverage proportions.
 
-Plot shows that by late 2017, 50% of age-eligible patients seen week had been or were vaccinated against varicella zoster.  This proportion has remained the same up to September 2018.
+Plot shows that by late 2017, 50% of age-eligible patients seen each week had been or were vaccinated against varicella zoster.  This proportion had remained the same up to September 2018.
 
 
 \
@@ -455,7 +463,7 @@ Linear regression analysis, with interaction effects, shown in table below.
 
 The 'discontinuity' of the Kensington vaccinated proportion at 'day zero' (`r toString(zero_date)`) is significant, with a jump of `r toString(signif(summary(Model100Days)$coefficients[['KensingtonTRUE:PostTRUE', 'Estimate']]*100, 3))`% (standard error `r toString(signif(summary(Model100Days)$coefficients[['KensingtonTRUE:PostTRUE', 'Std. Error']]*100, 3))`%, p-value `r toString(signif(summary(Model100Days)$coefficients[['KensingtonTRUE:PostTRUE', 'Pr(>|t|)']], 3))`).
 
-Following the treatment period, the rate of immunization coverage per months was not inferior to prior to the intervention in the '200-day model' (100 days prior to and after `r toString(zero_date)`). There was a tendency for the immunization rate to be slightly better than pre-treatment immunization coverage rate (+`r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Estimate']]*100, 3))`%/month, standard error `r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Std. Error']]*100, 2))`%/month, p-value `r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Pr(>|t|)']], 2))`).
+Following the treatment period, the rate of immunization coverage per month was non-inferior to prior to the intervention in the '200-day model' (100 days prior to and after `r toString(zero_date)`). There was a tendency for the immunization proportion increase to be slightly better than pre-treatment immunization proportion increase (+`r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Estimate']]*100, 3))`%/month, standard error `r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Std. Error']]*100, 2))`%/month, p-value `r toString(signif(summary(Model100Days)$coefficients[['Months:KensingtonTRUE:PostTRUE', 'Pr(>|t|)']], 2))`).
 
 This positive tendency is negligible in the '270-day model' (135 days prior to and after `r toString(zero_date)`), suggesting diminishing effect of the treatment, two months after the end of the treatment period.
 
@@ -479,11 +487,11 @@ tab_model(Model100Days, Model135Days,
 
 ### Impact
 
-During the treatment period itself, estimated 8.9% (95% confidence interval 5.7% to 12%) increase in Zostavax coverage rate among 200 eligible patients, equivalent to about 18 extra patients immunized against shingles.
+During the treatment period itself, an estimated 8.9% (95% confidence interval 5.7% to 12%) increase in Zostavax coverage rate among 200 eligible patients, equivalent to about 18 extra patients immunized against shingles.
 
 Given the effectivness of the vaccine, the immediate impact of this treatment is estimated to be approximately 0.1 less episodes of shingles per year among active patients in the eligible patient population. This may be an underestimate of the overall treatment effect, given that there is a tendency for a positive effect on immunization after the treatment program ended.
 
-There may be additional benefit after repeated treatments, though methods may need further refinement to better target the 'unreached' target population.
+There is potential for additional benefit after repeated treatments. Methods used in repeated treatments may need further refinement to better target the 'unreached' target population.
 
 \
 
