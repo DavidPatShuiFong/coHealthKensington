@@ -1,0 +1,435 @@
+---
+title: "Diabetes cycles of care incentive payments, Kensington 2019"
+author: '[David Fong](http://www.davidfong.info)'
+output:
+  pdf_document: default
+  html_document: default
+  always_allow_html: yes
+  
+abstract: Diabetes is a chronic disease affecting a large proportion of the older adult population.
+  It is a major contributing factor to kidney disease (being the most common reason for
+  being on dialysis in Australia), blindness, limb loss secondary to blood vessel disease
+  and heart attacks.
+  
+  Attention to blood sugar control, other risk factors for blood vessel disease (such as
+  smoking, elevated cholesterol and blood pressure), diabetic and dietary education, physical
+  activity, and monitoring for early signs of disease (through foot, eye and kidney checks) are
+  beneficial in reducing the risk of complications. 
+  
+  Recognizing this, the Australian Government has promoted the 'diabetic cycle of care', a way
+  of incentivizing general practices to do the required checks and screening for those at risk
+  of diabetic complications. These incentives are delivered as incentives for the completion
+  of cycles of care for individuals, and an overall incentive if 50% of a practice's diabetic
+  patients have had a cycle of care completed.
+  
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(broom)
+library(plotly) # provide plots
+library(sjPlot) # pretty regression table printing
+```
+
+## Synopsis
+
+
+## Method
+
+As more than 50% of eligible patients each week seen at the practice left without having a recorded completion of diabetic cycle of care, it was proposed that patients booked in each day are identified for potential cycle of care completion eligibility.
+
+A [Best Practice SQL script](SQLnoDiabSIP) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnoDiabSIP). Eligible patients were identified at the beginning of each day for a month, and reminders sent to clinicians (nurses and doctors) that these patients were eligible. This was done from 20th March 2019 to 30th April 2019 inclusive, the intervention ('treatment') period.
+
+Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
+
+## Data
+
+A [Best Practice SQL script](RSQLDiabSIPProportion) provide data of proportion of 'active' patients who have diabetes and/or have a Diabetes SIP claimed. Patients are defined as 'active' if they have three contacts over two years. Some 'contacts' may be trivial, e.g. correspondence and telephone contacts with third parties.
+
+During the period January 2019 to July 2019, the number of active diabetes patients stayed fairly constant at 274 to 277. During the same period, the number of active diabetes patients at 'Other (non-Kensington sites of coHealth)' reduced from 796 to 783.
+
+Full data and analysis R-code can be found on [Github](https://github.com/DavidPatShuiFong/coHealthKensington/blob/master/DiabetesSIP.Rmd).
+
+```{r data, include=FALSE}
+
+bp_report <- data.frame(Date = as.Date('2019/01/01'), DiabSIP = 44, Total = 273)
+
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/01/15'),50,274)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/02/01'),52,273)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/02/15'),57,274)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/03/01'),58,273)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/03/15'),63,271)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/04/01'),82,270)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/04/15'),100,267)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/05/01'),107,261)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/05/15'),117,271)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/06/01'),117,273)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/06/15'),119,277)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/07/01'),118,277)
+
+bp_other_report <- data.frame(Date = as.Date('2019/01/01'), DiabSIP = 169, Total = 796)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/02/01'),161,797)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/03/01'),149,791)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/04/01'),155,785)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/05/01'),153,776)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/06/01'),151,782)
+bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/07/01'),155,783)
+
+```
+
+### Plots
+
+```{r cbindpad, include=FALSE}
+
+cbindPad <- function(...){
+  # version of cbind which pads empty rows with NA
+  # written by 'joran', in answer to question on StackOverflow
+  # https://stackoverflow.com/questions/6988184/combining-two-data-frames-of-different-lengths
+  args <- list(...)
+  n <- sapply(args,nrow)
+  mx <- max(n)
+  pad <- function(x, mx){
+      if (nrow(x) < mx){
+        nms <- colnames(x)
+        padTemp <- matrix(NA, mx - nrow(x), ncol(x))
+        colnames(padTemp) <- nms
+        if (ncol(x)==0) {
+          return(padTemp)
+        } else {
+        return(rbind(x,padTemp))
+        }
+      }
+    else{
+      return(x)
+    }
+  }
+  rs <- lapply(args,pad,mx)
+  return(do.call(cbind,rs))
+}
+
+``` 
+
+#### Proportion of active diabetic patients with a completed cycle of care/Diabetes SIP {#bp_proportion}
+
+The proportion of active diabetic patients who have a recorded completed diabetic cycle of care (Diabetes sIP claimed).
+
+Main data source is extracted using [SQL code](RSQLDiabProportion) in Best Practice[^4].
+
+The intervention ('treatment') period, 20th March to 30th April (32 days), is shaded in purple in the plots below.
+
+```{r data_manipulate, include=FALSE}
+
+bp_report <- bp_report %>%
+  mutate(Proportion = DiabSIP/Total) %>%
+  mutate(numericDate = as.numeric(Date))
+
+bp_other_report <- bp_other_report %>%
+  mutate(other_Proportion = DiabSIP/Total) %>%
+  mutate(other_numericDate = as.numeric(Date)) %>%
+  rename(other_Date = Date) %>%
+  rename(other_DiabSIP = DiabSIP) %>%
+  rename(other_Total = Total)
+
+bp_report <- cbindPad(bp_report, bp_other_report)
+# uses defined function cbindPad (defined in previous code section)
+# note that rows originating from pencat_report are not 'aligned'
+# with the rows in bp_report, nor do they need to be...
+
+```
+
+
+```{r plot_bp, warning=FALSE, message=FALSE, echo=FALSE}
+
+ml <- loess(Proportion ~ numericDate, data = bp_report, span = 0.5)
+m <- augment(ml) #loess localized regression accepts numbers, not dates
+m$Date <- bp_report$Date # but plotly plots require, in this case, dates, not numbers!
+
+ml_o <- loess(other_Proportion ~ other_numericDate, data = bp_report)
+m_o <- augment(ml_o)
+m_o$other_Date <- bp_report$other_Date[!is.na(bp_report$other_Date)]
+m_o$Proportion <- bp_report$other_Proportion[!is.na(bp_report$other_Proportion)]
+
+p_bp <- bp_report %>%
+  plot_ly(x = ~Date, y = ~Proportion,
+          name = 'BP Kensington',
+          type = 'scatter', mode = 'markers') %>%
+  add_lines(y = ~fitted(ml), x = ~Date,
+            line = list(color = 'rgba(7,164,181,1)'),
+            showlegend = FALSE) %>%
+  add_trace(x=~other_Date, y = ~other_Proportion,
+            name = 'Other coHealth', type = 'scatter', mode = 'markers',
+            marker = list(color = 'rgba(200,82,82,.5)')) %>%
+  add_lines(y = ~fitted(ml_o), x = ~other_Date[!is.na(other_Date)],
+            line = list(color = 'rgba(200,82,82,.5)', dash = 'dash'),
+            showlegend = FALSE) %>%
+  add_ribbons(data = m,
+              x = ~Date,
+              ymin = ~.fitted - 1.96 * .se.fit,
+              ymax = ~.fitted + 1.96 * .se.fit,
+              line = list(color = 'rgba(7,164,181,0.05)'),
+              fillcolor = 'rgba(7,164,181,0.2)',
+              showlegend = FALSE) %>%
+  add_ribbons(data = m_o,
+              x = ~other_Date[!is.na(other_Date)],
+              ymin = ~.fitted - 1.96 * .se.fit,
+              ymax = ~.fitted + 1.96 * .se.fit,
+              line = list(color = 'rgba(200,82,82,0.05)'),
+              fillcolor = 'rgba(200,82,82,0.2)',
+              showlegend = FALSE) %>%
+  layout(title = 'Diabetes cycle of care (Diabetes SIP)
+         proportion of active diabetes patients (Best Practice report)
+         coHealth Kensington, 2019',
+         legend = list(x = 0.17, y = 0.6),
+         shapes = list(type = 'rect', fillcolor = 'purple', line = list(color = 'purple'), opacity = .15,
+                       x0 = '2019-03-20', x1 = '2019-04-30', xref = 'x',
+                       y0 = 0, y1 = .62, yref = 'y') # draw rectangle at time of intervention period
+)
+
+# link <- api_create(p_bp, filename = 'zostavax_coverage')
+p_bp
+
+
+```
+
+
+``` {r rdiscontinuity, echo = FALSE}
+
+begin_intervention <- as.Date('2019-03-20')
+end_intervention <- as.Date('2019-04-30')
+
+zero_date <- begin_intervention + (end_intervention-begin_intervention)/2
+
+bp_discontinuity <- bp_report %>%
+  select(c('Date', 'DiabSIP', 'Total', 'Proportion', 'numericDate')) %>%
+  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
+  mutate(Kensington = TRUE) %>% # these are all Kensington results
+  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
+  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
+
+bp_discontinuity_other <- bp_other_report %>%
+  rename(Proportion = other_Proportion) %>%
+  rename(numericDate = other_numericDate) %>%
+  rename(Date = other_Date) %>%
+  rename(DiabSIP = other_DiabSIP) %>%
+  rename(Total = other_Total) %>%
+  select(c('Date', 'DiabSIP', 'Total', 'Proportion', 'numericDate')) %>%
+  filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
+  mutate(Kensington = FALSE) %>% # these are all Kensington results
+  mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
+  mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
+
+bp_discontinuity <- rbind(bp_discontinuity, bp_discontinuity_other) %>%
+  mutate(Subgroup = paste(ifelse(Kensington, "Kensington", "Other (Control)"), ifelse(Post, "Post-Treatment", "Pre-Treatment"))) %>%
+  mutate(Subgroup = as.factor(Subgroup))
+
+bp_rd_100 <- bp_discontinuity %>% filter(abs(Months) <= 100/30)
+
+bp_rd_100$fv <- bp_rd_100 %>%
+  lm(Proportion ~ Months*Subgroup, .) %>%
+  fitted.values()
+
+```
+
+## Results
+
+The plots above suggest the project increased the proportion of patients with a recorded completed diabetic cycle of care during the study period. The increase in proportion of patients with recorded completed diabetic cycle of care also exceeded the rate of increase in other, comparable, coHealth medical clinics during the same time period.
+
+A regression discontinuity plot of immunization proportion is shown below, centred around the middle of the intervention ('treatment') time period (`r toString(zero_date)`), up to 100 days (approximately 3 months) before and after the middle of the treatment period, and not including immunization proportions during the treatment period itself (27th September to 9th November 2018).
+
+\
+
+```{r echo=FALSE}
+
+bp_rd_100_plot <- bp_rd_100 %>%
+  plot_ly(x = ~Months, y = ~Proportion,
+          name = ~Subgroup,
+          type = 'scatter', mode = 'markers', color = ~Subgroup) %>%
+  add_trace(x = ~Months, y = ~fv, mode = 'lines', showlegend = FALSE) %>%
+  layout(title = 'Pre-post Diabetes cycle of care proportion',
+         legend = list(x = 0.6, y = 0.5))
+bp_rd_100_plot
+
+```
+
+```{r echo = FALSE}
+
+Model <- lm('Proportion ~ Months + Kensington + Post + Months*Kensington + Months*Post + Kensington*Post + Months*Kensington*Post',
+                    data = bp_discontinuity)
+```
+
+### Regression analysis
+
+Linear regression analysis, with interaction effects, shown in table below.
+
+The 'discontinuity' of the Kensington proportion of active diabetic patients with a completed diabetes cycle of care at 'day zero' (`r toString(zero_date)`) is significant, with a jump of `r toString(signif(summary(Model)$coefficients[['KensingtonTRUE:PostTRUE', 'Estimate']]*100, 3))`% (standard error `r toString(signif(summary(Model)$coefficients[['KensingtonTRUE:PostTRUE', 'Std. Error']]*100, 3))`%, p-value `r toString(signif(summary(Model)$coefficients[['KensingtonTRUE:PostTRUE', 'Pr(>|t|)']], 3))`).
+
+Following the treatment period, the rate of Diabetes SIP claims among Kensington patients was inferior to prior to the intervention . 
+
+```{r echo = FALSE}
+
+tab_model(Model,
+          title = "Proportion of active diabetic patients with reported completed cycle of care (Diabetes SIP) - Linear Regression model",
+          digits = 4,
+          pred.labels = c("(Intercept)", "Months",
+                          "Kensington Clinic",
+                          "Post-treatment",
+                          "Months X Kensington",
+                          "Months X Post-treatment",
+                          "Kensington X Post",
+                          "Months X Kensington X Post"))
+
+```
+
+### Impact
+
+During the treatment period itself, an estimated 14.0% (95% confidence interval 10.9% to 17.2%) increase in reported completion in diabetes cycle of care among 275 active patients with diabetes, equivalent to about 38 extra patients.
+
+There is potential for additional benefit after repeated treatments. Methods used in repeated treatments may need further refinement to better target the 'unreached' target population.
+
+\
+
+```{r}
+```
+
+## SQL code for Best Practice
+
+### Number of 'active' diabetic patients who have a SIP claimed {#RSQLDiabProportion}
+
+This R code generates a SQL scripts for listing active diabetic patients who have
+a Diabetes SIP claimed. A modified versio nof the generated SQL script lists all active
+diabetic patients, with or without Diabetes SIP claims.
+
+
+```{r eval=FALSE}
+
+sqlK.query <- 
+  "SELECT *
+FROM BPS_Patients
+
+WHERE StatusText = 'Active'
+
+AND InternalID IN (SELECT InternalID 
+    FROM Visits v
+    INNER JOIN (VALUES('%%bhagwat%%'),('%%fong%%'),('%%ekanayake%%'),('%%shoesmith%%'), 
+            ('%%plastow%%'),('%%samarawickrama%%'),('%%obeyesekere%%'),('%%chaves%%'),
+            ('%%ryan%%'),('%%mikhail%%'),('%%haynes%%'),('%%buckwell%%'),('%%maxwell%%'),
+            ('%%grace ho%%'),('%%bullen%%'),('%%lambrou%%'),('%%zeigler%%'))
+        AS ProviderName(Name)
+        ON v.DrName LIKE ProviderName.Name
+    WHERE VisitDate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
+    AND RecordStatus = 1
+
+    GROUP BY internalid
+    HAVING count(internalid) >= 3)
+
+AND InternalID IN (SELECT InternalID
+    -- history of diabetes
+    FROM PastHistory
+	    WHERE ItemCode IN (3, 775, 776, 778, 774, 7840, 11998)
+		AND RecordStatus = 1)
+
+AND InternalID IN (SELECT InternalID
+    FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID
+        FROM Services
+            WHERE Recordstatus = 1
+            AND Servicedate > DateAdd(Month, -6, '%s'))) 
+
+AND InternalID IN (SELECT InternalID 
+    # remove this section if finding 'total' diabetes patients
+    # with or without SIP
+    FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID 
+        FROM Services WHERE Recordstatus = 1 
+            AND Mbsitem IN (2517, 2521, 2525) 
+            AND Servicedate BETWEEN DateAdd(Year, -1, '%s') AND '%s'))
+
+ORDER BY surname, firstname
+"
+
+sql.query <- 
+"SELECT *
+FROM BPS_Patients
+
+WHERE StatusText = 'Active'
+
+AND InternalID IN (SELECT InternalID 
+    FROM Visits v
+  INNER JOIN (VALUES('%%membrey%%'),('%%halewood%%'),('%%maccartney%%'),('%%coles%%'),('%%dowd%%'),
+    ('%%winter%%'),('%%wells%%'),('%%wiener%%'),('%%rainsford%%'),('%%tomlinson%%'),('%%walker%%'),
+            ('%%linton%%'),('%%victoria%%'),('%%gordon%%'),('%%johnston%%'),('%%mascarenhas%%'),('%%khaira%%'),
+            ('%%green%%'),('%%wilding%%'),('%%mancey-jones%%'),('%%gardiner%%'),('%%pike%%'),('%%scopel%%'),
+            ('%%ohnmar%%'),('%%rengasamy%%'),('%%taylor%%'),('%%leung%%'),('%%guo%%'),('%%bui%%'),
+            ('%%whiting%%'),('%%keaney%%'),('%%bourke%%'),('%%hewett%%'),('%%anderson%%'),('%%whiting%%'),
+            ('%%bramwell%%'),('%%khaira%%'))
+
+        AS ProviderName(Name)
+        ON v.DrName LIKE ProviderName.Name
+    WHERE VisitDate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
+    AND RecordStatus = 1
+
+    GROUP BY internalid
+    HAVING count(internalid) >= 3)
+
+AND InternalID IN (SELECT InternalID
+    -- history of diabetes
+    FROM PastHistory
+	    WHERE ItemCode IN (3, 775, 776, 778, 774, 7840, 11998)
+		AND RecordStatus = 1)
+
+AND InternalID IN (SELECT InternalID
+    FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID
+        FROM Services
+            WHERE Recordstatus = 1
+            AND Servicedate > DateAdd(Month, -6, '%s'))) 
+
+AND InternalID IN (SELECT InternalID
+    FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID 
+        FROM Services WHERE Recordstatus = 1 
+            AND Mbsitem IN (2517, 2521, 2525) 
+            AND Servicedate BETWEEN DateAdd(Year, -1, '%s') AND '%s'))
+
+ORDER BY surname, firstname
+"
+
+for (mydate in c("20190601", "20190701")) {
+  cat(sprintf(sql.query, mydate, mydate, mydate, mydate, mydate))
+  cat("\n")
+}
+```
+
+### Identify booked patients without a record (billing) of completed cycle of care {#SQLnoDiabSIP}
+
+```{sql eval=FALSE}
+SELECT *
+FROM BPS_Patients
+
+WHERE StatusText = 'Active'
+
+AND InternalID IN (SELECT InternalID 
+    FROM Appointments
+    INNER JOIN (VALUES('%bhagwat%'),('%fong%'),('%ekanayake%'),('%shoesmith%'), 
+            ('%plastow%'),('%samarawickrama%'),('%obeyesekere%'),('%chaves%'),
+            ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),('%maxwell%'),
+            ('%grace ho%'),('%bullen%'),('%lambrou%'),('%zeigler%')) AS providers(Name)
+    ON dbo.BPSPayee(UserID) LIKE providers.Name
+
+    WHERE AppointmentDate = '20190318'
+    AND RecordStatus = 1
+    )
+	
+AND InternalID IN (SELECT InternalID
+    -- history of diabetes
+    FROM PastHistory
+	    WHERE ItemCode IN (3, 775, 776, 778, 774, 7840, 11998)
+		AND RecordStatus = 1)
+
+AND InternalID NOT IN (SELECT InternalID
+    -- DiabetesSIP claimed in past year
+    FROM Invoices WHERE InvoiceID IN (SELECT InvoiceID 
+        FROM Services WHERE Recordstatus = 1 
+            AND Mbsitem IN (2517, 2521, 2525) 
+            AND Servicedate BETWEEN DATEADD(Year, -1, GetDate()) AND GetDate()))
+			
+ORDER BY surname, firstname
+```
