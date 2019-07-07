@@ -3,8 +3,8 @@ title: "Diabetes cycles of care incentive payments, Kensington 2019"
 author: '[David Fong](http://www.davidfong.info)'
 output:
   
-  pdf_document: default
   html_document: default
+  pdf_document: default
   always_allow_html: yes
     
 abstract: Diabetes is a chronic disease affecting a large proportion of the older adult population.
@@ -43,6 +43,14 @@ library(plotly) # provide plots
 library(sjPlot) # pretty regression table printing
 ```
 
+\
+
+<center>
+![FigName](DiabSIP2019.png)
+</center>
+
+\
+
 ## Diabetes Outcomes
 
 Through the practice incentive program the government seeks to reward practices for meeting defined outcome measures. One of these outcomes is completing ‘cycles of care’ for patients who have a diagnosis of diabetes.
@@ -60,7 +68,7 @@ Current Diabetes SIP claiming rate (according to late 2018 PIP data) = 49%
 **Target Diabetes SIP claim rate to claim annual outcome payement = 50%**
     target has been achieved in recent years, but fell below 50% in the most recent quarter 
 
-Additional Diabetes SIP revenue, if target Diabetes SIP claim rate achieved = (50-49)/100 * 256 * $40 = $100
+Additional Diabetes SIP revenue, if target Diabetes SIP claim rate achieved = $\frac{50-49}{100} \times 256 \times \$40 = \$100$
 
 Additional revenue if Diabetes Outcome Payment achieved = $5120 (annual outcome payment) + $100 (additional diabetes SIP revenue) = $5220
 
@@ -92,13 +100,13 @@ More than 50% of eligible patients each week seen at the practice left without h
 
 In other cases, the cycle of compare might be complete, or be almost complete, but the attending health provider might not be aware that the cycle is close to completion.
 
-[In another project at Kensington site](http://rpubs.com/DavidFong/Zostavax), patients were identified every day for a period of six weeks, who were already booked to be seen that day. Clinicians were notified that a preventative action could be done. During the intervention period, immunization rates for Zostavax improved in absolute terms by 8.9%, a 17% relative increase in Zostavax immunization in the target population.
+[In another project at Kensington site](http://rpubs.com/DavidFong/Zostavax), patients were identified every day for a period of six weeks, who were already booked to be seen that day. Clinicians were notified that a preventative action (immunization with Zostavax to reduce the risk of shingle) could be done. During the intervention period, immunization rates for Zostavax improved in absolute terms by 8.9%, a 17% relative increase in Zostavax immunization in the target population.
 
 It was planned that diabetic patients who have not had diabetes SIP claimed be identified daily, and clinicians notified.
 
-Patients booked in each day during the intervention period (20th March to 30th April 2019) were identified for potential cycle of care completion eligibility. There are many reasons why this might the case. Completing a cycle of care takes time, and also takes patient motivation to complete some elements of care.
+Patients booked in each day during the intervention period (20th March to 30th April 2019) were identified for potential cycle of care completion eligibility. There are many reasons why this might the case. Completing a cycle of care takes time, and also takes patient motivation to complete some elements of care. Given the presence of competing issues, health care providers might simply need to be reminded that preventative and monitoring health activities are potentially overdue.
 
-A [Best Practice SQL script](SQLnoDiabSIP) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnoDiabSIP). Eligible patients were identified at the beginning of each day for a month, and reminders sent to clinicians (nurses and doctors) that these patients were eligible. This was done from 20th March 2019 to 30th April 2019 inclusive, the intervention ('treatment') period.
+A [Best Practice SQL script](SQLnoDiabSIP) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnoDiabSIP). Eligible patients were identified at the beginning of each day for a month, and reminders sent to clinicians (nurses and doctors) that these patients were eligible.
 
 Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
 
@@ -179,11 +187,17 @@ cbindPad <- function(...){
 
 #### Proportion of active diabetic patients with a completed cycle of care/Diabetes SIP {#bp_proportion}
 
-The proportion of active diabetic patients who have a recorded completed diabetic cycle of care (Diabetes sIP claimed).
+The proportion of active diabetic patients who have a recorded completed diabetic cycle of care (Diabetes SIP claimed) is shown in the plot below.
 
-Main data source is extracted using [SQL code](RSQLDiabProportion) in Best Practice[^4].
+Main data source is extracted using [SQL code](RSQLDiabProportion) in **Best Practice**.
 
-The intervention ('treatment') period, 20th March to 30th April (32 days), is shaded in purple in the plots below.
+The intervention ('treatment') period, 20th March to 30th April (32 days), is shaded in purple.
+
+Two notes regarding changes in recorded Diabetes SIP which occurred independent of the intervention of this study:
+
+1. Kensington site has a long-running multi-disciplinary diabetes clinic, run by the chronic disease nurse (Melissa Lambrou), which actively seeks to recruit and evaluate diabetes patients, with the aim of completing and recording diabetes cycles of care. 
+
+2. Due to a change in clinical software system in June 2018, the Kensington site and some of the other sites would not have Diabetes SIP data pre-dating June 2018. This caused a 'catch-up' increase, in the order of a relative $\frac{1}{12}\approx8\%$ per month (in absolute terms, approximately $0.33\times\frac{1}{12}\approx2.75\%$ per month), in recorded SIP claims up to Jun 2019. 
 
 \
 
@@ -304,7 +318,7 @@ bp_rd_100$fv <- bp_rd_100 %>%
 
 The plots above suggest the project increased the proportion of patients with a recorded completed diabetic cycle of care during the study period. The increase in proportion of patients with recorded completed diabetic cycle of care also exceeded the rate of increase in other, comparable, coHealth medical clinics during the same time period.
 
-A regression discontinuity plot of immunization proportion is shown below, centred around the middle of the intervention ('treatment') time period (`r toString(zero_date)`), up to 100 days (approximately 3 months) before and after the middle of the treatment period, and not including immunization proportions during the treatment period itself (27th September to 9th November 2018).
+A regression discontinuity difference-in-difference plot of immunization proportion is shown below, centred around the middle of the intervention ('treatment') time period (`r toString(zero_date)`), up to 100 days (approximately 3 months) before and after the middle of the treatment period, and not including immunization proportions during the treatment period itself (20th March to 30th April 2019).
 
 \
 
@@ -356,7 +370,7 @@ tab_model(Model,
 
 ### Impact
 
-During the treatment period itself, an estimated 14.0% (95% confidence interval 10.9% to 17.2%) increase in reported completion in diabetes cycle of care among 275 active patients with diabetes, about 38 extra patients.
+During the treatment period itself, an estimated 14.0% (95% confidence interval 10.9% to 17.2%) absolute increase in reported completion in diabetes cycle of care among 275 active patients with diabetes, about 38 extra patients.
 
 Increase in revenue due to Diabetes SIP payments was $\$40\times38 = \$1520$. If, as very likely, the government-set target of 50% Diabetes SIP coverage was achieved, then there was an additional $\$5520$ revenue per quarter. The estimated total increase in revenue is $\$7740$.
 
