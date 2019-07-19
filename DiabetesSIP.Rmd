@@ -2,10 +2,10 @@
 title: "Diabetes cycles of care incentive payments, Kensington 2019"
 author: '[David Fong](http://www.davidfong.info)'
 output:
-  pdf_document: default
-  html_document: default
-  always_allow_html: yes
   
+  html_document: default
+  pdf_document: default
+  always_allow_html: yes
 abstract: Diabetes is a chronic disease affecting a large proportion of the older adult population.
   It is a major contributing factor to kidney disease (being the most common reason for
   being on dialysis in Australia), blindness, limb loss secondary to blood vessel disease
