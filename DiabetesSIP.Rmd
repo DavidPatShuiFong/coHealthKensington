@@ -6,22 +6,34 @@ output:
   html_document: default
   pdf_document: default
   always_allow_html: yes
+
+=======
+    
 abstract: Diabetes is a chronic disease affecting a large proportion of the older adult population.
   It is a major contributing factor to kidney disease (being the most common reason for
   being on dialysis in Australia), blindness, limb loss secondary to blood vessel disease
-  and heart attacks.
+  and heart attacks.\
+  
+  \
   
   Attention to blood sugar control, other risk factors for blood vessel disease (such as
   smoking, elevated cholesterol and blood pressure), diabetic and dietary education, physical
   activity, and monitoring for early signs of disease (through foot, eye and kidney checks) are
-  beneficial in reducing the risk of complications. 
+  beneficial in reducing the risk of complications. Attention to *individual* risk factors can
+  reduce the risk of, for example, heart disease by 20% over five years.\
+  
+  \
   
   Recognizing this, the Australian Government has promoted the 'diabetic cycle of care', a way
   of incentivizing general practices to do the required checks and screening for those at risk
   of diabetic complications. These incentives are delivered as incentives for the completion
   of cycles of care for individuals, and an overall incentive if 50% of a practice's diabetic
-  patients have had a cycle of care completed.
+  patients have had a cycle of care completed.\
   
+  \
+  
+  This project uses methods to improve the monitoring and promote recommended interventions
+  among patients with diabetes who visit the practice.
   
 ---
 
@@ -33,24 +45,86 @@ library(plotly) # provide plots
 library(sjPlot) # pretty regression table printing
 ```
 
-## Synopsis
+\
 
+<center>
+![FigName](DiabSIP2019.png)
+</center>
+
+\
+
+## Diabetes Outcomes
+
+Through the practice incentive program the government seeks to reward practices for meeting defined outcome measures. One of these outcomes is completing ‘cycles of care’ for patients who have a diagnosis of diabetes.
+
+Intervention for diabetes (such as reduction of blood pressure, sugar levels or cholesterol to recommended targets) result in up to 20% reduction of heart attacks over five years. Reminders to complete the ‘cycle of care’ could help promote additional beneficial interventions among patients with diabetes.
+
+\
+
+### Incentive payments
+
+Current practice diabetic patient population at Kensington site : 256 (according to early 2018 PIP data) Annual outcome payment : $20 per diabetic patient = $5120. : has been achieved in recent years, but not in the most recent quarter.
+
+Current Diabetes SIP claiming rate (according to late 2018 PIP data) = 49%
+
+**Target Diabetes SIP claim rate to claim annual outcome payment = 50%**
+    target has been achieved in recent years, but fell below 50% in the most recent quarter 
+
+Additional Diabetes SIP revenue, if target Diabetes SIP claim rate achieved = $\frac{50-49}{100} \times 256 \times \$40 = \$100$
+
+Additional revenue if Diabetes Outcome Payment achieved = $5120 (annual outcome payment) + $100 (additional diabetes SIP revenue) = $5220
+
+\
 
 ## Method
 
-As more than 50% of eligible patients each week seen at the practice left without having a recorded completion of diabetic cycle of care, it was proposed that patients booked in each day are identified for potential cycle of care completion eligibility.
+\
 
-A [Best Practice SQL script](SQLnoDiabSIP) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnoDiabSIP). Eligible patients were identified at the beginning of each day for a month, and reminders sent to clinicians (nurses and doctors) that these patients were eligible. This was done from 20th March 2019 to 30th April 2019 inclusive, the intervention ('treatment') period.
+### Tasks required to improve detection of patients who might benefit from diabetes review
+
+In order to improve the care of patients with diabetes, it is necessary to identify patients who have diabetes. This is in part achieved by ensuring that patients with a diagnosis of diabetes in the past history have a coded diagnosis of diabetes in the file.
+
+This is because if the diagnosis is not coded then automated techniques to identify patients with diabetes do not work well.
+
+For example, the **Best Practice** clinical software does not recognize diabetes diagnoses of the type ‘non-insulin dependent’ or ‘insulin dependent’ diabetes or the variations of that style of diagnosis naming (e.g. ‘NIDDM’ and ‘IDDM’).
+
+[SQL code at the end of this document](DiabetesNoDiagnosis) is an example of technique to help identify those patients in the file with the ‘NIDDM/IDDM’ style of diabetes diagnosis recorded in file, without any other diagnosis which is recognized by **Best Practice** as ‘diabetes’.
+
+That search identified 128 patients across coHealth with ‘iddm’ or ‘diabetes’ in a recorded diagnosis, but not identified as diabetic by Best Practice. Of these, twenty-four (24) had a ‘iddm’/‘niddm’ style diagnosis.
+
+Using this, and other, techniques a health care provider (in this case, Dr Kayty Plastow) can then amend the clinical record so that patients with a diagnosis of diabetes is then recognized as being 'diabetic' in subsequent searches using **Best Practice**.
+
+\
+
+### Daily detection of patients with diabetes who already have an appointment to see a health care provider
+
+More than 50% of eligible patients each week seen at the practice left without having a recorded completion of diabetic cycle of care. 
+
+In other cases, the cycle of compare might be complete, or be almost complete, but the attending health provider might not be aware that the cycle is close to completion.
+
+[In another project at Kensington site](http://rpubs.com/DavidFong/Zostavax), patients were identified every day for a period of six weeks, who were already booked to be seen that day. Clinicians were notified that a preventative action (immunization with Zostavax to reduce the risk of shingle) could be done. During the intervention period, immunization rates for Zostavax improved in absolute terms by 8.9%, a 17% relative increase in Zostavax immunization in the target population.
+
+It was planned that diabetic patients who have not had diabetes SIP claimed be identified daily, and clinicians notified.
+
+Patients booked in each day during the intervention period (20th March to 30th April 2019) were identified for potential cycle of care completion eligibility. There are many reasons why this might the case. Completing a cycle of care takes time, and also takes patient motivation to complete some elements of care. Given the presence of competing issues, health care providers might simply need to be reminded that preventative and monitoring health activities are potentially overdue.
+
+A [Best Practice SQL script](SQLnoDiabSIP) which identifies non-immunized eligible patients is [presented at the end of this document](SQLnoDiabSIP). Eligible patients were identified at the beginning of each day for a month, and reminders sent to clinicians (nurses and doctors) that these patients were eligible.
 
 Modified variations of these tools can be used to identify patients for whom other health screening activities are recommended, and both measure and monitor practice performance in these activities. Examples include bowel cancer or cervical cancer screening, or early detection of chronic kidney disease among patients with diabetes.
 
+\
+
 ## Data
+
+\
 
 A [Best Practice SQL script](RSQLDiabSIPProportion) provide data of proportion of 'active' patients who have diabetes and/or have a Diabetes SIP claimed. Patients are defined as 'active' if they have three contacts over two years. Some 'contacts' may be trivial, e.g. correspondence and telephone contacts with third parties.
 
 During the period January 2019 to July 2019, the number of active diabetes patients stayed fairly constant at 274 to 277. During the same period, the number of active diabetes patients at 'Other (non-Kensington sites of coHealth)' reduced from 796 to 783.
 
 Full data and analysis R-code can be found on [Github](https://github.com/DavidPatShuiFong/coHealthKensington/blob/master/DiabetesSIP.Rmd).
+
+\
 
 ```{r data, include=FALSE}
 
@@ -80,6 +154,8 @@ bp_other_report[nrow(bp_other_report)+1,] <- list(as.Date('2019/07/01'),155,783)
 ```
 
 ### Plots
+
+\
 
 ```{r cbindpad, include=FALSE}
 
@@ -113,11 +189,19 @@ cbindPad <- function(...){
 
 #### Proportion of active diabetic patients with a completed cycle of care/Diabetes SIP {#bp_proportion}
 
-The proportion of active diabetic patients who have a recorded completed diabetic cycle of care (Diabetes sIP claimed).
+The proportion of active diabetic patients who have a recorded completed diabetic cycle of care (Diabetes SIP claimed) is shown in the plot below.
 
-Main data source is extracted using [SQL code](RSQLDiabProportion) in Best Practice[^4].
+Main data source is extracted using [SQL code](RSQLDiabProportion) in **Best Practice**.
 
-The intervention ('treatment') period, 20th March to 30th April (32 days), is shaded in purple in the plots below.
+The intervention ('treatment') period, 20th March to 30th April (32 days), is shaded in purple.
+
+Two notes regarding changes in recorded Diabetes SIP which occurred independent of the intervention of this study:
+
+1. Kensington site has a long-running multi-disciplinary diabetes clinic, run by the chronic disease nurse (Melissa Lambrou), which actively seeks to recruit and evaluate diabetes patients, with the aim of completing and recording diabetes cycles of care. 
+
+2. Due to a change in clinical software system in June 2018, the Kensington site and some of the other sites would not have Diabetes SIP data pre-dating June 2018. This caused a 'catch-up' increase, in the order of a relative $\frac{1}{12}\approx8\%$ per month (in absolute terms, approximately $0.33\times\frac{1}{12}\approx2.75\%$ per month), in recorded SIP claims up to Jun 2019. 
+
+\
 
 ```{r data_manipulate, include=FALSE}
 
@@ -216,7 +300,7 @@ bp_discontinuity_other <- bp_other_report %>%
   rename(Total = other_Total) %>%
   select(c('Date', 'DiabSIP', 'Total', 'Proportion', 'numericDate')) %>%
   filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
-  mutate(Kensington = FALSE) %>% # these are all Kensington results
+  mutate(Kensington = FALSE) %>% # these are not Kensington results
   mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
   mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
 
@@ -236,7 +320,7 @@ bp_rd_100$fv <- bp_rd_100 %>%
 
 The plots above suggest the project increased the proportion of patients with a recorded completed diabetic cycle of care during the study period. The increase in proportion of patients with recorded completed diabetic cycle of care also exceeded the rate of increase in other, comparable, coHealth medical clinics during the same time period.
 
-A regression discontinuity plot of immunization proportion is shown below, centred around the middle of the intervention ('treatment') time period (`r toString(zero_date)`), up to 100 days (approximately 3 months) before and after the middle of the treatment period, and not including immunization proportions during the treatment period itself (27th September to 9th November 2018).
+A regression discontinuity difference-in-difference plot of immunization proportion is shown below, centred around the middle of the intervention ('treatment') time period (`r toString(zero_date)`), up to 100 days (approximately 3 months) before and after the middle of the treatment period, and not including immunization proportions during the treatment period itself (20th March to 30th April 2019).
 
 \
 
@@ -265,7 +349,9 @@ Linear regression analysis, with interaction effects, shown in table below.
 
 The 'discontinuity' of the Kensington proportion of active diabetic patients with a completed diabetes cycle of care at 'day zero' (`r toString(zero_date)`) is significant, with a jump of `r toString(signif(summary(Model)$coefficients[['KensingtonTRUE:PostTRUE', 'Estimate']]*100, 3))`% (standard error `r toString(signif(summary(Model)$coefficients[['KensingtonTRUE:PostTRUE', 'Std. Error']]*100, 3))`%, p-value `r toString(signif(summary(Model)$coefficients[['KensingtonTRUE:PostTRUE', 'Pr(>|t|)']], 3))`).
 
-Following the treatment period, the rate of Diabetes SIP claims among Kensington patients was inferior to prior to the intervention . 
+Following the treatment period, the rate of Diabetes SIP claims among Kensington patients was inferior to prior to the intervention .
+
+\
 
 ```{r echo = FALSE}
 
@@ -282,9 +368,15 @@ tab_model(Model,
 
 ```
 
+\
+
 ### Impact
 
-During the treatment period itself, an estimated 14.0% (95% confidence interval 10.9% to 17.2%) increase in reported completion in diabetes cycle of care among 275 active patients with diabetes, equivalent to about 38 extra patients.
+During the treatment period itself, an estimated 14.0% (95% confidence interval 10.9% to 17.2%) absolute increase in reported completion in diabetes cycle of care among 275 active patients with diabetes, about 38 extra patients.
+
+Increase in revenue due to Diabetes SIP payments was $\$40\times38 = \$1520$. If, as very likely, the government-set target of 50% Diabetes SIP coverage was achieved, then there was an additional $\$5520$ revenue per quarter. The estimated total increase in revenue is $\$7740$.
+
+Each completed diabetes cycle of care is an opportunity for additional interventions which reduce or manage diabetic complications (such as reduction in blood pressure, sugar levels or cholesterol). If half of the additional 38 patients who had a completed cycle of care also had an additional effective intervention, then there could be four or five less heart attacks in the practice diabetic population over five years.
 
 There is potential for additional benefit after repeated treatments. Methods used in repeated treatments may need further refinement to better target the 'unreached' target population.
 
@@ -293,7 +385,36 @@ There is potential for additional benefit after repeated treatments. Methods use
 ```{r}
 ```
 
-## SQL code for Best Practice
+## SQL and R code for Best Practice{#DiabetesNoDiagnosis}
+
+### Detection of patients who are likely to have diabetes, but have no 'coded' diagnosis
+
+```{SQL eval=FALSE}
+SELECT *
+
+FROM BPS_Patients
+  WHERE StatusText = 'Active'
+  AND (InternalID IN (SELECT InternalID FROM PastHistory WHERE ItemText LIKE '%iddm%')
+  OR InternalID IN (SELECT InternalID FROM PastHistory WHERE ItemText LIKE '%diabetes%')
+)
+
+AND InternalID NOT IN (SELECT InternalID
+  FROM PastHistory
+    WHERE ItemCode IN (3, 775, 776, 778, 774, 780, 1563, 7840, 11998)
+    AND RecordStatus = 1)
+
+AND InternalID NOT IN (SELECT InternalID
+  FROM PastHistory
+    WHERE Itemtext LIKE '%pre diabetes%'
+    AND RecordStatus = 1)
+
+AND InternalID NOT IN (SELECT InternalID
+  FROM PastHistory
+    WHERE Itemtext LIKE '%prediabetes%'
+    AND RecordStatus = 1)
+
+ORDER BY surname, firstname
+```
 
 ### Number of 'active' diabetic patients who have a SIP claimed {#RSQLDiabProportion}
 
