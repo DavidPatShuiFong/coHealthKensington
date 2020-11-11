@@ -1,6 +1,6 @@
 ---
-title: "Colorectal cancer screening, Kensington 2018"
-abstract: Colorectal cancer is the second most common cause of cancer-related death in Australia. Biennial faecal occult blood test can reducec colorectal cancer mortality by 15-25%. This project measures the proportion of eligible patients at the Kensington site screened for colorectal cancer over 2017-2018. A mechanism to improve colorectal screening is proposed. The techniques used in this project are generalizable to other practice quality improvement activities.
+title: "Colorectal cancer screening, Kensington 2019"
+abstract: Colorectal cancer is the second most common cause of cancer-related death in Australia. Biennial faecal occult blood test can reducec colorectal cancer mortality by 15-25%. This project measures the proportion of eligible patients at the Kensington site screened for colorectal cancer over 2017-2019. A mechanism to improve colorectal screening is proposed. The techniques used in this project are generalizable to other practice quality improvement activities.
 
 author: 'David Fong'
 output: html_document
@@ -31,14 +31,14 @@ The Australian government supports screening for colorectal cancer screening wit
 
 [^5]: https://www.racgp.org.au/clinical-resources/clinical-guidelines/key-racgp-guidelines/view-all-racgp-guidelines/red-book/early-detection-of-cancers/colorectal-cancer
 
-Despite the effectiveness of faecal occult blood testing in early detection and prevention of mortality from colorectal cancer, 53% of invitees to the National Bowel Cancer Screening Program do not undertake the test[^6]. Among 28000 patients seen in the week beginning 29th October 2018 by general practices using "Doctor's Control Panel"[^7] computer-assisted decision making tool, just 8196 (29%) were recorded as having a faecal occult blood test or colonoscopy in the preceding two years. In the same week, among the 440 patients seen in coHealth medical clinics, just 94 (21%) were recorded as having a faecal occult blood test or colonoscopy in the preceding two years.
+Despite the effectiveness of faecal occult blood testing in early detection and prevention of mortality from colorectal cancer, 53% of invitees to the National Bowel Cancer Screening Program do not undertake the test[^6]. Among 30070 eligible patients seen in the week beginning 8th July 2019 by general practices using "Doctor's Control Panel"[^7] computer-assisted decision making tool, just 9881 (33%) were recorded as having a faecal occult blood test or colonoscopy in the preceding two years. 50% had no record of bowel cancer screening at any time. In the same week, among the 464 patients seen in coHealth medical clinics, just 154 (33%) were recorded as having a faecal occult blood test or colonoscopy in the preceding two years, 49% having no record of any bowel cancer screening test at any time.
 
 [^6]: https://www.aihw.gov.au/reports/cancer-screening/analysis-of-bowel-cancer-outcomes-nbcsp-2018/contents/summary
 [^7]: https://www.doctorscontrolpanel.com.au/
 
-The proportion of eligible 50-75 year olds who had a recorded colorectal cancer screening, either faecal occult blood testing or colonoscopy, during the preceding two years has increased gradually at the Kensington site of coHealth [from 23% in January 2017 to 25% in October 2018](#bp_proportion). 
+The proportion of eligible 50-75 year olds who had a recorded colorectal cancer screening, either faecal occult blood testing or colonoscopy, during the preceding two years has increased gradually at the Kensington site of coHealth [from 23% in January 2017 to 30% in July 2019](#bp_proportion). 
 
-Approximately 75% of eligible patients each week seen at the practice leave without a record of having been screened for colorectal cancer, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
+Approximately 70% of eligible patients each week seen at the practice leave without a record of having been screened for colorectal cancer, it is proposed that patients booked in each day are identified for potential Zostavax immunization eligibility.
 
 ### Potential benefit
 
@@ -54,13 +54,13 @@ Modified variations of these tools can be used to identify patients for whom oth
 
 ### Data
 
-Best Practice (up to September 2018) and PenCAT (up to June 2018) provide data of proportion of 'active' patients who have been screened for colorectal cancer. Patients are defined as 'active' if they have three contacts over two years. Some 'contacts' may be trivial, e.g. correspondence and telephone contacts with third parties.
+Best Practice (up to July 2019) ) provides data of the proportion of 'active' patients who have been screened for colorectal cancer. Patients are defined as 'active' if they have three contacts over two years. Some 'contacts' may be trivial, e.g. correspondence and telephone contacts with third parties.
 
 Full data and analysis R-code can be found on [Github](https://github.com/DavidPatShuiFong/coHealthKensington/).
 
 ```{r data, include=FALSE}
 
-bp_report <- data.frame(Date = as.Date('2017/01/01'), Vaccinated = 203, Total = 892)
+bp_report <- data.frame(Date = as.Date('2017/01/01'), Screened = 203, Total = 892)
 
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/04/01'),215,896)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2017/07/01'),215,896)
@@ -69,21 +69,10 @@ bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/01/01'),222,821)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/04/01'),212,833)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/07/01'),208,836)
 bp_report[nrow(bp_report)+1,] <- list(as.Date('2018/10/01'),215,829)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/01/01'),230,839)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/04/01'),243,852)
+bp_report[nrow(bp_report)+1,] <- list(as.Date('2019/07/01'),262,864)
 
-pencat_report <- data.frame(Date = as.Date('2017/01/03'), Vaccinated = 108, Total = 986)
-
-pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/04/05'),111,977)
-pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/07/06'),113,930)
-pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/10/05'),115,920)
-pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2017/12/28'),111,885)
-pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2018/02/10'),111,893)
-pencat_report[nrow(pencat_report)+1,] <- list(as.Date('2018/04/03'),109,887)
-
-
-# placeholder - no weekly data yet obtained!
-# it is expected that this data may be retrieved with a modified Best Practice SQL script
-# dcp_report <- data.frame(Date =  as.Date('2017/08/13'), Proportion = 0.26)
-# dcp_report[nrow(dcp_report)+1,] <- list(as.Date('2017/08/20'),0.19)
 
 ```
 
@@ -123,28 +112,15 @@ cbindPad <- function(...){
 
 The proportion of active patients aged 50-75 years who have a record of colorectal screening during the previous two years (currently, 'two years' applies both to faecal occult blood scrrening and colonoscopy).
 
-Main data source is extracted using [SQL code](SQLyfo) in Best Practice[^8].
+Main data source is extracted using [SQL code](SQLyfo) in Best Practice.
 
-[^8]: Similar data is available from PenCAT, which is also plotted for comparison purposes. PenCAT screening rates are lower, probably because PenCAT's search tools seems to only search for results in 'Investigation rerports', when many results have been filed in 'Correspondence'. 
-
-Proportion of patients recorded as having been screened within the previous two years has been fairly constant from January 2017 to October 2017, perhaps slightly increasing from about 23% to 25%.
+Proportion of patients recorded as having been screened within the previous two years has gradually increased from 23% (January 2017) to 30% (July 2019).
 
 ```{r data_manipulate, include=FALSE}
-pencat_report <- pencat_report %>%
-  mutate(pencat_Proportion = Vaccinated/Total) %>%
-  mutate(pencat_numericDate = as.numeric(Date)) %>%
-  rename(pencat_Date = Date) %>%
-  select(pencat_Proportion, pencat_Date, pencat_numericDate)
 
 bp_report <- bp_report %>%
-  mutate(Proportion = Vaccinated/Total) %>%
+  mutate(Proportion = Screened/Total) %>%
   mutate(numericDate = as.numeric(Date))
-
-bp_report <- cbindPad(bp_report, pencat_report)
-# adds pencat_report to bp_report
-# uses defined function cbindPad (defined in previous code section)
-# note that rows originating from pencat_report are not 'aligned'
-# with the rows in bp_report, nor do they need to be...
 
 ```
 
@@ -154,22 +130,12 @@ ml <- loess(Proportion ~ numericDate, data = bp_report)
 m <- augment(ml) #loess localized regression accepts numbers, not dates
 m$Date <- bp_report$Date # but plotly plots require, in this case, dates, not numbers!
 
-ml_p <- loess(pencat_Proportion ~ pencat_numericDate, data = bp_report)
-m_p <- augment(ml_p)
-m_p$Date <- bp_report$pencat_Date[!is.na(bp_report$pencat_Date)]
-
 p_bp <- bp_report %>%
   plot_ly(x = ~Date, y = ~Proportion,
           name = 'BP SQL data',
           type = 'scatter', mode = 'markers') %>%
   add_lines(y = ~fitted(ml), x = ~Date,
             line = list(color = 'rgba(7,164,181,1)'),
-            showlegend = FALSE) %>%
-  add_trace(x=~pencat_Date, y = ~pencat_Proportion,
-            name = 'PenCAT data', type = 'scatter', mode = 'markers',
-            marker = list(color = 'rgba(164,164,164,.5)')) %>%
-  add_lines(y = ~fitted(ml_p), x = ~pencat_Date[!is.na(pencat_Date)],
-            line = list(color = 'rgba(164,164,164,.5)', dash = 'dash'),
             showlegend = FALSE) %>%
   add_ribbons(data = m,
               x = ~Date,
@@ -180,12 +146,11 @@ p_bp <- bp_report %>%
               showlegend = FALSE) %>% 
   layout(title = 'Colorectal Cancer Screening
          proportion of 50-75 year olds (Best Practice report)
-         coHealth Kensington, 2017-2018',
+         coHealth Kensington, 2017-2019',
          yaxis = list(range=c(0.05,0.35)),
          legend = list(x = 0.75, y = 0.5)
 )
 
-link <- api_create(p_bp, filename = 'fobt_coverage')
 p_bp
 
 
@@ -215,10 +180,7 @@ p_dcp <- dcp_report %>%
               line = list(color = 'rgba(7,164,181,0.05)'),
               fillcolor = 'rgba(7,164,181,0.2)',
               showlegend = FALSE) %>% 
-  layout(title = 'Varicella zoster vaccination
-         proportion of 70-79 year olds
-         seen in each week (DCP report)
-         coHealth Kensington, 2017-2018')
+  layout(title = 'Bowel Cancer Screening, Kensington 2019')
 
 link <- api_create(p_dcp, filename = 'fobt_dcp')
 p_dcp
@@ -229,67 +191,66 @@ p_dcp
 
 #### Number of 'active' patients aged 50-75 years who have had a FOBT or colonoscopy within the past two years {#SQLyfo}
 
-```{sql eval=FALSE}
-SELECT *
+```{r eval=FALSE}
+
+sqlK.query <- 
+"SELECT *
 FROM BPS_Patients
 
 WHERE StatusText = 'Active'
-AND DOB BETWEEN DateAdd(Year,-75,'20181001') AND DateAdd(Year,-50,'20181001')
+AND DOB BETWEEN DateAdd(Year,-75,'%s') AND DateAdd(Year,-50,'%s')
 -- current age 50 to 75 years
 
-AND InternalID IN (SELECT InternalID 
-  FROM Visits V
-  INNER JOIN (VALUES('%bhagwat%'),('%fong%'),('%ekanayake%'),('%shoesmith%'), 
-             ('%plastow%'),('%samarawickrama%'),('%obeyesekere%'),('%chaves%'),
-             ('%ryan%'),('%mikhail%'),('%haynes%'),('%buckwell%'),('%maxwell%'),
-             ('%grace ho%'),('%bullen%'),('%lambrou%'),('%zeigler%')) AS providers(Name)
-             ON v.DrName LIKE providers.Name
-             -- appointment with specified providers
 
-  WHERE VisitDate BETWEEN DateAdd(Year,-2,'20181001') AND '20181001'
-  -- visits during specified two year time period
-  AND RecordStatus = 1
- 
-  GROUP BY internalid
-  HAVING count(internalid) >= 3 
-  -- minimum 3 visits during specified time period
-  )
+AND InternalID IN (SELECT InternalID 
+    FROM Visits v
+    INNER JOIN (VALUES('%%bhagwat%%'),('%%fong%%'),('%%ekanayake%%'),('%%shoesmith%%'), 
+            ('%%plastow%%'),('%%samarawickrama%%'),('%%obeyesekere%%'),('%%chaves%%'),
+            ('%%ryan%%'),('%%mikhail%%'),('%%haynes%%'),('%%buckwell%%'),('%%maxwell%%'),
+            ('%%grace ho%%'),('%%bullen%%'),('%%lambrou%%'),('%%zeigler%%'))
+        AS ProviderName(Name)
+        ON v.DrName LIKE ProviderName.Name
+    WHERE VisitDate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
+    AND RecordStatus = 1
+
+    GROUP BY internalid
+    HAVING count(internalid) >= 3)
 
 AND (InternalID IN (SELECT InternalID
   FROM Investigations
-  INNER JOIN (VALUES ('%Faecal Occult Blood%'),('%FOB%'),('%FOBT%'),
-                                       ('%OCCULT BLOOD%'),('%faecal human haemoglobin%'),
-                                       ('%OCB NATIONAL SCREENING%'),('%FHB%'),('%FAECAL BLOOD%'),
-                                       ('%OCCULT%'),('%Faecal Immunochemical Test%'),('%FAECAL HAEMOGLOBIN%'),
-                                       ('%colonoscopy%'),('%colonoscope%')
+  INNER JOIN (VALUES ('%%Faecal Occult Blood%%'),('%%FOB%%'),('%%FOBT%%'),
+                                       ('%%OCCULT BLOOD%%'),('%%faecal human haemoglobin%%'),
+                                       ('%%OCB NATIONAL SCREENING%%'),('%%FHB%%'),('%%FAECAL BLOOD%%'),
+                                       ('%%OCCULT%%'),('%%Faecal Immunochemical Test%%'),('%%FAECAL HAEMOGLOBIN%%'),
+                                       ('%%colonoscopy%%'),('%%colonoscope%%')
              ) AS tests(fobtnames)
              ON TestName LIKE tests.fobtnames
-  WHERE Reportdate BETWEEN DateAdd(Year,-2,'20181001') AND '20181001'
+  WHERE Reportdate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
   )  
 
   OR (InternalID IN (SELECT InternalID
     FROM CorrespondenceIn
-    INNER JOIN (VALUES ('%Faecal Occult Blood%'),('%FOB%'),('%FOBT%'),
-                                       ('%OCCULT BLOOD%'),('%faecal human haemoglobin%'),
-                                       ('%OCB NATIONAL SCREENING%'),('%FHB%'),('%FAECAL BLOOD%'),
-                                       ('%OCCULT%'),('%Faecal Immunochemical Test%'),('%FAECAL HAEMOGLOBIN%'),
-                                       ('%colonoscopy%'),('%colonoscope%')
+    INNER JOIN (VALUES ('%%Faecal Occult Blood%%'),('%%FOB%%'),('%%FOBT%%'),
+                                       ('%%OCCULT BLOOD%%'),('%%faecal human haemoglobin%%'),
+                                       ('%%OCB NATIONAL SCREENING%%'),('%%FHB%%'),('%%FAECAL BLOOD%%'),
+                                       ('%%OCCULT%%'),('%%Faecal Immunochemical Test%%'),('%%FAECAL HAEMOGLOBIN%%'),
+                                       ('%%colonoscopy%%'),('%%colonoscope%%')
              ) AS tests(fobtnames)
              ON Subject LIKE tests.fobtnames
-    WHERE Correspondencedate BETWEEN DateAdd(Year,-2,'20181001') AND '20181001'
+    WHERE Correspondencedate BETWEEN DateAdd(Year,-2,'%s') and '%s'
     )
   )
 
   OR (InternalID IN (SELECT InternalID
     FROM CorrespondenceIn
-    INNER JOIN (VALUES ('%Faecal Occult Blood%'),('%FOB%'),('%FOBT%'),
-                                       ('%OCCULT BLOOD%'),('%faecal human haemoglobin%'),
-                                       ('%OCB NATIONAL SCREENING%'),('%FHB%'),('%FAECAL BLOOD%'),
-                                       ('%OCCULT%'),('%Faecal Immunochemical Test%'),('%FAECAL HAEMOGLOBIN%'),
-                                       ('%colonoscopy%'),('%colonoscope%')
+    INNER JOIN (VALUES ('%%Faecal Occult Blood%%'),('%%FOB%%'),('%%FOBT%%'),
+                                       ('%%OCCULT BLOOD%%'),('%%faecal human haemoglobin%%'),
+                                       ('%%OCB NATIONAL SCREENING%%'),('%%FHB%%'),('%%FAECAL BLOOD%%'),
+                                       ('%%OCCULT%%'),('%%Faecal Immunochemical Test%%'),('%%FAECAL HAEMOGLOBIN%%'),
+                                       ('%%colonoscopy%%'),('%%colonoscope%%')
              ) AS tests(fobtnames)
              ON Detail LIKE tests.fobtnames
-    WHERE Correspondencedate BETWEEN DateAdd(Year,-2,'20181001') AND '20181001'
+    WHERE Correspondencedate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
     )
   )
   
@@ -298,11 +259,97 @@ AND (InternalID IN (SELECT InternalID
 	WHERE LoincCode IN ('2335-8','27396-1','14563-1','14564-9','14565-6',
 	                    '12503-9','12504-7','27401-9','27925-7','27926-5',
 	                    '57905-2','56490-6','56491-4','29771-3')
-	AND ReportDate BETWEEN DateAdd(Year,-2,'20181001') AND '20181001'
+	AND ReportDate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
 	)
   ))
- 
+
+
 ORDER BY surname, firstname
+"
+
+sql.query <- 
+"SELECT *
+FROM BPS_Patients
+
+WHERE StatusText = 'Active'
+AND DOB BETWEEN DateAdd(Year,-75,'%s') AND DateAdd(Year,-50,'%s')
+-- current age 50 to 75 years
+
+AND InternalID IN (SELECT InternalID 
+    FROM Visits v
+  INNER JOIN (VALUES('%%membrey%%'),('%%halewood%%'),('%%maccartney%%'),('%%coles%%'),('%%dowd%%'),
+    ('%%winter%%'),('%%wells%%'),('%%wiener%%'),('%%rainsford%%'),('%%tomlinson%%'),('%%walker%%'),
+            ('%%linton%%'),('%%victoria%%'),('%%gordon%%'),('%%johnston%%'),('%%mascarenhas%%'),('%%khaira%%'),
+            ('%%green%%'),('%%wilding%%'),('%%mancey-jones%%'),('%%gardiner%%'),('%%pike%%'),('%%scopel%%'),
+            ('%%ohnmar%%'),('%%rengasamy%%'),('%%taylor%%'),('%%leung%%'),('%%guo%%'),('%%bui%%'),
+            ('%%whiting%%'),('%%keaney%%'),('%%bourke%%'),('%%hewett%%'),('%%anderson%%'),('%%whiting%%'),
+            ('%%bramwell%%'),('%%khaira%%'))
+
+        AS ProviderName(Name)
+        ON v.DrName LIKE ProviderName.Name
+        
+    WHERE VisitDate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
+    AND RecordStatus = 1
+
+    GROUP BY internalid
+    HAVING count(internalid) >= 3)
+
+AND (InternalID IN (SELECT InternalID
+  FROM Investigations
+  INNER JOIN (VALUES ('%%Faecal Occult Blood%%'),('%%FOB%%'),('%%FOBT%%'),
+                                       ('%%OCCULT BLOOD%%'),('%%faecal human haemoglobin%%'),
+                                       ('%%OCB NATIONAL SCREENING%%'),('%%FHB%%'),('%%FAECAL BLOOD%%'),
+                                       ('%%OCCULT%%'),('%%Faecal Immunochemical Test%%'),('%%FAECAL HAEMOGLOBIN%%'),
+                                       ('%%colonoscopy%%'),('%%colonoscope%%')
+             ) AS tests(fobtnames)
+             ON TestName LIKE tests.fobtnames
+  WHERE Reportdate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
+  )  
+
+  OR (InternalID IN (SELECT InternalID
+    FROM CorrespondenceIn
+    INNER JOIN (VALUES ('%%Faecal Occult Blood%%'),('%%FOB%%'),('%%FOBT%%'),
+                                       ('%%OCCULT BLOOD%%'),('%%faecal human haemoglobin%%'),
+                                       ('%%OCB NATIONAL SCREENING%%'),('%%FHB%%'),('%%FAECAL BLOOD%%'),
+                                       ('%%OCCULT%%'),('%%Faecal Immunochemical Test%%'),('%%FAECAL HAEMOGLOBIN%%'),
+                                       ('%%colonoscopy%%'),('%%colonoscope%%')
+             ) AS tests(fobtnames)
+             ON Subject LIKE tests.fobtnames
+    WHERE Correspondencedate BETWEEN DateAdd(Year,-2,'%s') and '%s'
+    )
+  )
+
+  OR (InternalID IN (SELECT InternalID
+    FROM CorrespondenceIn
+    INNER JOIN (VALUES ('%%Faecal Occult Blood%%'),('%%FOB%%'),('%%FOBT%%'),
+                                       ('%%OCCULT BLOOD%%'),('%%faecal human haemoglobin%%'),
+                                       ('%%OCB NATIONAL SCREENING%%'),('%%FHB%%'),('%%FAECAL BLOOD%%'),
+                                       ('%%OCCULT%%'),('%%Faecal Immunochemical Test%%'),('%%FAECAL HAEMOGLOBIN%%'),
+                                       ('%%colonoscopy%%'),('%%colonoscope%%')
+             ) AS tests(fobtnames)
+             ON Detail LIKE tests.fobtnames
+    WHERE Correspondencedate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
+    )
+  )
+  
+  OR (InternalID IN (SELECT InternalID
+	FROM ReportValues
+	WHERE LoincCode IN ('2335-8','27396-1','14563-1','14564-9','14565-6',
+	                    '12503-9','12504-7','27401-9','27925-7','27926-5',
+	                    '57905-2','56490-6','56491-4','29771-3')
+	AND ReportDate BETWEEN DateAdd(Year,-2,'%s') AND '%s'
+	)
+  ))
+
+
+ORDER BY surname, firstname
+"
+
+for (mydate in c("20190701")) {
+  cat(sprintf(sql.query, mydate, mydate, mydate, mydate, mydate, mydate,
+              mydate, mydate, mydate, mydate, mydate, mydate))
+  cat("\n")
+}
 ```
 
 #### Identify booked patients without FOBT/colonoscopy {#SQLnotyetfobt}

@@ -6,6 +6,8 @@ output:
   html_document: default
   pdf_document: default
   always_allow_html: yes
+
+=======
     
 abstract: Diabetes is a chronic disease affecting a large proportion of the older adult population.
   It is a major contributing factor to kidney disease (being the most common reason for
@@ -65,7 +67,7 @@ Current practice diabetic patient population at Kensington site : 256 (according
 
 Current Diabetes SIP claiming rate (according to late 2018 PIP data) = 49%
 
-**Target Diabetes SIP claim rate to claim annual outcome payement = 50%**
+**Target Diabetes SIP claim rate to claim annual outcome payment = 50%**
     target has been achieved in recent years, but fell below 50% in the most recent quarter 
 
 Additional Diabetes SIP revenue, if target Diabetes SIP claim rate achieved = $\frac{50-49}{100} \times 256 \times \$40 = \$100$
@@ -298,7 +300,7 @@ bp_discontinuity_other <- bp_other_report %>%
   rename(Total = other_Total) %>%
   select(c('Date', 'DiabSIP', 'Total', 'Proportion', 'numericDate')) %>%
   filter(Date < begin_intervention | Date > end_intervention) %>% # remove measurements during intervention period
-  mutate(Kensington = FALSE) %>% # these are all Kensington results
+  mutate(Kensington = FALSE) %>% # these are not Kensington results
   mutate(Post = ifelse(Date > end_intervention, TRUE, FALSE)) %>% # 'Post' if after intervention
   mutate(Months = as.numeric(Date - zero_date)/30) # days from the middle of the intervention
 
