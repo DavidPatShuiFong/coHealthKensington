@@ -1,0 +1,157 @@
+---
+title: "Results marked 'Discuss'"
+author: "David Fong"
+date: "11/November/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data
+
+```{r collapse=TRUE, message=FALSE, warning=FALSE}
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(highcharter)
+```
+
+```{r collapse=TRUE}
+d <- data.frame(
+  Age = c("0-1", "1-2", "2-3", "3-4", "4-5", "5-6", "6-7", "7-8", "8-9", "9-10", "10-11", "11-12"), # age in weeks
+  Jul2015 = I(list(list(Not.Notified = 88, Notified = 16), # notified, not notified
+                   list(Not.Notified = 79, Notified = 35),
+                   list(Not.Notified = 81, Notified = 52),
+                   list(Not.Notified = 30, Notified = 45),
+                   list(Not.Notified = 25, Notified = 43),
+                   list(Not.Notified = 36, Notified = 51),
+                   list(Not.Notified = 14, Notified = 53),
+                   list(Not.Notified = 22, Notified = 96),
+                   list(Not.Notified = 31, Notified = 71),
+                   list(Not.Notified = 21, Notified = 56),
+                   list(Not.Notified = 31, Notified = 94),
+                   list(Not.Notified = 26, Notified = 72))),
+  Mar2017 = I(list(list(Not.Notified = 86, Notified = 15), # notified, not notified
+                   list(Not.Notified = 41, Notified = 20),
+                   list(Not.Notified = 26, Notified = 37),
+                   list(Not.Notified = 75, Notified = 44),
+                   list(Not.Notified = 42, Notified = 51),
+                   list(Not.Notified = 23, Notified = 64),
+                   list(Not.Notified = 43, Notified = 73),
+                   list(Not.Notified = 38, Notified = 40),
+                   list(Not.Notified = 30, Notified = 69),
+                   list(Not.Notified = 47, Notified = 91),
+                   list(Not.Notified = 47, Notified = 52),
+                   list(Not.Notified = 11, Notified = 10))),
+  Jun2017 = I(list(list(Not.Notified = 63, Notified = 4), # notified, not notified
+                   list(Not.Notified = 49, Notified = 33),
+                   list(Not.Notified = 47, Notified = 36),
+                   list(Not.Notified = 41, Notified = 44),
+                   list(Not.Notified = 38, Notified = 74),
+                   list(Not.Notified = 22, Notified = 42),
+                   list(Not.Notified = 45, Notified = 77),
+                   list(Not.Notified = 18, Notified = 23),
+                   list(Not.Notified = 26, Notified = 42),
+                   list(Not.Notified = 38, Notified = 39),
+                   list(Not.Notified = 34, Notified = 64),
+                   list(Not.Notified = 26, Notified = 39))),
+  Sep2017 = I(list(list(Not.Notified = 96, Notified = 32), # notified, not notified
+                   list(Not.Notified = 68, Notified = 41),
+                   list(Not.Notified = 96, Notified = 51),
+                   list(Not.Notified = 85, Notified = 49),
+                   list(Not.Notified = 91, Notified = 52),
+                   list(Not.Notified = 91, Notified = 47),
+                   list(Not.Notified = 78, Notified = 65),
+                   list(Not.Notified = 82, Notified = 85),
+                   list(Not.Notified = 55, Notified = 108),
+                   list(Not.Notified = 62, Notified = 88),
+                   list(Not.Notified = 69, Notified = 99),
+                   list(Not.Notified = 45, Notified = 76))),
+  row.names = "Age"
+)
+```
+
+```{r collapse=TRUE}
+# create PercentageNotified
+for (i in names(d)) {
+  d[[i]] <- lapply(
+    d[[i]],
+    function(x) {
+      list(Notified = x$Notified,
+           Not.Notified = x$Not.Notified,
+           Percentage.Not.Notified = round(x$Not.Notified / (x$Notified + x$Not.Notified) * 100))
+      
+    })
+}
+
+# create means
+d$Means <- lapply(
+  seq(to = nrow(d)),
+  function(x) {as.list(rowMeans(sapply(slice(d, x), unlist)))}
+)
+```
+
+```{r collapse=TRUE}
+# change to long format
+d_long <- data.frame()
+for (i in names(d)) {
+  d_long <- rbind(
+    d_long,
+    do.call(
+      rbind,
+      mapply(
+        function(x, y, z) {
+          data.frame(Not.Notified = x$Not.Notified,
+                     Notified = x$Notified,
+                     Percentage.Not.Notified = x$Percentage,
+                     Month = y,
+                     AgeWeeks = z)
+        },
+        d[[i]], i, row.names(d[i]),
+        SIMPLIFY = FALSE)
+    )
+  )
+}
+
+d_long <- d_long %>%
+  gather(key = Group, value = n, "Not.Notified", "Notified", "Percentage.Not.Notified") %>%
+  mutate(Series = paste(Month, Group))
+
+```
+
+## Chart
+
+```{r collapse=TRUE}
+highchart() %>%
+  hc_add_series(
+    d_long %>% filter(!grepl("Means", Series)),
+    "line",
+    hcaes(x = AgeWeeks,
+          y = n,
+          group = Series),
+    visible = FALSE
+  ) %>%
+  hc_title(text = "Results marked 'Discuss' as of 7th July 2015, 24th March 2017, 5th June 2017,19th September 2017") %>%
+  hc_subtitle(text = "Results notified/not-yet-notified") %>%
+  hc_xAxis(title = list(text = "Weeks")) %>%
+  hc_yAxis(title = list(text = "n")) %>%
+  hc_size(height = 600) %>%
+  hc_add_series(
+    d_long %>% filter(grepl("Means", Series) & !grepl("Percentage", Series)),
+    "line",
+    hcaes(x = AgeWeeks,
+          y = n,
+          group = Series),
+    visible = FALSE
+  ) %>%
+  hc_add_series(
+    d_long %>% filter(grepl("Means", Series) & grepl("Percentage", Series)),
+    "line",
+    hcaes(x = AgeWeeks,
+          y = n,
+          group = Series),
+    visible = TRUE # just show this series initially
+  )
+```
