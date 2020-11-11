@@ -1,10 +1,18 @@
 ---
-title: "Results marked 'non-urgent discussion' - rate of notification without a result notification procedure"
+title: Results marked 'non-urgent discussion' - rate of notification without a result
+  notification procedure
 author: "David Fong"
 date: "11/November/2020"
-output: 
- html_document:
-  code_folding: hide
+output:
+  rmdformats::readthedown:
+    code_folding: hide
+    lightbox: false
+    self_contained: true
+    thumbnails: false
+  html_document:
+    toc: yes
+    df_print: paged
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -181,7 +189,7 @@ highchart() %>%
 
 In the average (mean) of four series, 55% results marked 'non-urgent discussion' are discussed within four weeks of the result. After four weeks, relatively few results marked 'non-urgent' are likely to be marked 'discussed' in the subsequent six weeks.
 
-### Number of results marked 'discuss non-urgently'
+### Number of results marked 'non-urgent discussion'
 
 ```{r}
 highchart() %>%
