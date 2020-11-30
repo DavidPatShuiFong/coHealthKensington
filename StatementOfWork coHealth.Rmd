@@ -1,0 +1,289 @@
+---
+title: "GPstat! Statement of Work for coHealth"
+author: "David Fong"
+date: "25th November 2020"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 4
+    number_sections: true
+fontsize: 12pt
+geometry: margin=1in
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# The work
+
+The work is 'GPstat!', including the underlying '[DailyMeasure](https://github.com/DavidPatShuiFong/DailyMeasure)' software suite.
+
+# Introduction
+
+This statement of work specifies the deliverables and services for the use of 
+'GPstat!' at coHealth. This statement of work describes how the contributor (David Fong)
+provides these deliverables and services for the user (coHealth) on a non-remunerated and voluntary basis.
+
+# Purpose
+
+'GPstat!' is a software tool for patient care Quality Improvement.  'GPstat!'s 
+the data stored in the 'Best Practice' electronic medical record database to identify
+opportunities for patient care improvement, including immunization, cancer screening,
+poly-pharmacy review and chronic disease management. This enables coHealth to more
+easily promote care co-ordination and planning and claim the payments associated
+with those activities.
+
+'GPstat!' examines the 'Best Practice' appointment book to find these opportunities
+in the 'near-future'.
+
+'GPstat!' allows and encourages daily monitoring of quality improvement activities,
+as is achievable with patient information as provided by the 'Best Practice' database.
+Activities include daily review of Practice Incentive Program quality improvement measures 
+([PIP QIM](https://www1.health.gov.au/internet/main/publishing.nsf/Content/PIP-QI_Incentive_guidance))
+and result management. This enables coHealth to more easily comply with and
+claim the incentive payments available through the PIP QIM.
+
+# Scope
+
+## Deliverables
+
+* A file, in executable or ZIP archive format, of the 'GPstat!' software is provided.
+  Links to the software installation files are provided on the
+  [DailyMeasure](https://github.com/DavidPatShuiFong/DailyMeasure) github website.
+  
+* Documentation is provided on the installation and removal of the work. The
+  documentation is provided [in words](https://rpubs.com/DavidFong/GPstatInstall)
+  and as [a video](https://youtu.be/stfFmX114CY).
+* Documentation is provided on the use of 'GPstat!'. The documentation is provided
+  as [a video](https://youtu.be/mTJzcycPkRU). Help documentation is also available
+  when using the 'GPstat!' software.
+
+* The contributor (David Fong) will respond via telephone, e-mail or in person to issues and requests
+  related to the use of 'GPstat!'. The contributor will respond to enquires about the
+  internal workings of the 'GPstat!' software.
+  
+  + A formal mechanism to record issues and problems, relating to bugs or mistakes
+  in the operation of the software, is provided via the 
+  [Dailymeasure github project page issue tracker](https://github.com/DavidPatShuiFong/DailyMeasure/issues?q=is%3Aopen+is%3Aissue).
+
+## Location and Time
+
+The work is provided to be used on the computers at the medical clinics of coHealth.
+The work is installed on each computer where the work is to be used.
+
+The service period of this statement of work is one year, from
+25th November 2020 to 25th November 2021.
+
+# Standards
+
+* The work uses 'R', a standard work environment for statistical computing, widely
+  used by statisticians and data scientists. 'R' is provided by the work. 
+  The base environment and associated supporting software are licensed to be
+  'open' for peer review.
+
+## Privacy and confidentiality
+
+* Privacy statement is as described within the GPstat! software. The statement
+  can be seen in the 
+  [GPstat!/DailyMeasure project page](https://github.com/DavidPatShuiFong/DailyMeasure/blob/master/R/module_About.R)
+  and is reproduced below.
+  
+> *No patient information, identified, de-identified, aggregated or
+  otherwise is stored locally (on the computers used by the clinic)
+  unless explicitly saved/copied/printed by the user.*
+  
+> *No patient information, identified, de-identified, aggregated or
+  otherwise is sent/transmitted across the network or Internet.*
+  
+> *Information about the users of the software, as stored in
+  Best Practice and modified by the user, is stored locally
+  (on the computers used by the clinic).*
+  
+> *Information about the users of the software, and the name of the clinic
+  is sent in encrypted form - using the Internet - to GPstat!/DailyMeasure
+  subscription database **if** explicitly requested by the user. The information
+  about the users includes
+  provider number and user name, as is stored in the Best Practice.
+  The information is stored in the GPstat!/DailyMeasure database
+  in encrypted form. The database will send back information to the
+  user, in encrypted form, which includes the clinic name, user details
+  and subscription details.*
+
+> *Information about GPstat!/DailyMeasure usage is stored locally
+  (on the computeres used by the clinic) if logging features are enabled
+  by the user. This information is not sent/transmitted across the network/Internet.
+  By default, logging features are disabled.*
+
+## Testing
+
+* Development and testing is conducted on David Fong's personal computers i.e.
+  not on coHealth's computers.
+  
+* If, and when, issues with the use of 'GPstat!' on
+  coHealth computers which was not experienced during testing,
+  then limited diagnostic testing may occur on coHealth computers e.g. examining
+  the database data which resulted in the issues/software 'error'.
+  
+* Current release version (and previous versions) have
+  been successfully installed, and is currently being used, by a clinic other
+  than coHealth since 2019.
+
+## Monitoring and Reporting requirement
+
+* The contributor (David Fong) shall immediately notify the user (coHealth) in writing if
+  the level of performance of the contributor of any element of the service
+  during the term of this statement of work is likely to or fails to meet the terms
+  of this statement of work.
+  
+* The user (coHealth) will notify the contributor (David Fong) in writing if the
+  level of performance of the contributor of any element of the provision of Services
+  during the term of this statement of work is failing to meet any the terms of
+  this statement of work.
+
+### GPstat! changes
+
+* The contributor (David Fong) will report when there are changes, including changes as the result
+  of the coHealth requests, to the distributed version of 'GPstat!'.
+  + The changes are available for viewing on 
+  [DailyMeasure's github project page](https://github.com/DavidPatShuiFong/DailyMeasure/blob/master/NEWS.md).
+  + Additional changes on versions in use at Kensington site, which may not yet be
+  available for general distribution, are also described on
+  [DailyMeasure's 'develop' github project page](https://github.com/DavidPatShuiFong/DailyMeasure/blob/develop/NEWS.md).
+  
+* A mechanism to record and monitor progress on issues and problems is provided via the 
+  [Dailymeasure github project page issue tracker](https://github.com/DavidPatShuiFong/DailyMeasure/issues?q=is%3Aopen+is%3Aissue).
+
+* As per [Mozilla Public License 2.0, 3.2 'Distribution of Executable Form'](https://www.mozilla.org/en-US/MPL/2.0/)
+  *Covered Software must also be made available in Source Code Form* (allowing monitoring
+  and review of any and all software changes). Source code is available for review via the
+  [DailyMeasure](https://github.com/DavidPatShuiFong/DailyMeasure/) and
+  [dMeasure](https://github.com/DavidPatShuiFong/dMeasure/) github project pages.
+
+# User's obligations
+
+* The work requires access to the '*bpsrawdata*' account of the Best Practice
+  database.
+
+* The work requires the 'Chrome' web browser to be available (executable) from
+  each computer work station where it is installed.
+
+# Definition of success
+
+Working installation(s) of 'GPstat!' on workstations at coHealth, as required by
+clinician(s) at coHealth Kensington, for use in patient care quality improvement
+activities.
+
+# Ownership
+
+'GPstat!', the underlying 'DailyMeasure' software suite and future versions as
+written/modified by the contributor [*David Fong*], is and remains the property
+of David Fong.
+  
+* 'GPstat!' versions as has or will be released under
+  [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/) grants to
+  the user [*coHeatlh*]
+  *world-wide, royalty-free, non-exclusive license: (a) under intellectual property
+  rights (other than patent or trademark) Licensable by [prior contributors, a
+  contributor being an individual or legal entity that creates, contributes to
+  the creation of, or owns the GPstat! software] to use,
+  reproduce, make available, modify, display, perform, distribute, and otherwise
+  exploit its Contributions, either on an unmodified basis, with Modifications,
+  or as part of a Larger Work; and (b) under Patent Claims of such Contributor to
+  make, use, sell, offer for sale, have made, import, and otherwise transfer
+  either its Contributions or its Contributor Version* subject to limitations
+  and responsibilities as further described in the
+  [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
+
+# Payments
+
+* The work is provided free of charge to the user (coHealth). 
+
+  + The work is *not* being provided
+    to coHealth in the course of a business, a commercial dealing or in connection
+    with the advancement or protection of the commercial interests of the
+    contributor (David Fong)
+
+* The work is licensed under the 
+[Mozilla Public License 2.0](https://github.com/DavidPatShuiFong/DailyMeasure/blob/master/LICENSE).
+The [Mozilla Public License 2.0, Section 2.1](https://www.mozilla.org/en-US/MPL/2.0/) grants
+the user(s) *a world-wide, royalty-free, non-exclusive license ... to use, reproduce,
+make available, modify, display, perform, distribute, and otherwise exploit*.
+
+* At the request of coHealth or David Fong, the provision of future updates and
+  revisions of 'GPstat!' by David Fong for the use of coHealth is to be reviewed
+  second yearly.
+
+## Service credits/penalties
+
+* Service credits/penalties are required to be paid by the contributor (David Fong)
+  to the user (coHealth) in the event that the service provided by the
+  contributor falls below the terms specified by this statement of work during
+  the service period.
+  
+  + The user, on becoming aware of the service provision being below the
+  terms specified by this statement of work, is to notify the contributor, as per
+  the 'Monitoring' section. At the time of notification, the service is deemed
+  to be not available. 
+  
+  + When the contributor brings the service provision to
+  comply with the terms specified by this statement of work (e.g. amendments
+  are made to the work, made available on the work's project page on github,
+  and made available as a file as specified in 'Deliverables'),
+  the contributor is to notify the user. At the time of notification, then the
+  service is deemed available.
+  
+    - Service Level performance criterion - Availability of Service
+    - Key indicator - Availability
+    - Service Level Performance Measure - 95%
+    - 5% service credit gained for each percentage under 95% availability
+  
+* The service credit is determined by the service level achieved, and is calculated
+  by using the straight line formula below:
+  
+  1. Availability : $Service\ Credit\ \$ = ((\frac{a}{100}-\frac{x}{100})\times c\times d)$
+     where
+     
+     - $a$ is the Service Level Performance Measure (%) below which the service credits become payable;
+     - $x$ is the achieved service level (%) for the service period (one year)
+     - $c$ is the service credit payable (5) if the achieved service level falls below the service level target
+     - $d$ is the amount payable (by the user to the contributor) in respect of the services during the period
+     
+     to the maximum value of $d$.
+     e.g. if the performance level is 92% and the amount payable during the period is $100 then
+     $Service\ Credit\ \$ = (0.95-0.92)\times 5 \times 100 = \$15$
+     
+* Current amount payable '$d$' in respect of the services during the period is $0.
+
+## Disclaimer of Warranty and Limitation of Liability
+
+As described under the [Mozilla Public License 2.0 Sections 6 and 7](https://www.mozilla.org/en-US/MPL/2.0/).
+
+> Covered Software [*GPstat!*] is provided under this License on an “as is” basis, without warranty of any kind, either expressed, implied, or statutory, including, without limitation, warranties that the Covered Software is free of defects, merchantable, fit for a particular purpose or non-infringing. The entire risk as to the quality and performance of the Covered Software is with You [*individual or legal entity exercising rights (of use) under the Mozilla Public License 2.0 i.e. coHealth*]. Should any Covered Software prove defective in any respect, You (not any Contributor) assume the cost of any necessary servicing, repair, or correction. This disclaimer of warranty constitutes an essential part of this License. No use of any Covered Software is authorized under this License except under this disclaimer.
+
+> Under no circumstances and under no legal theory, whether tort (including negligence), contract, or otherwise, shall any Contributor [*individual or legal entity that creates, contributes to the creation of, or owns Covered Software 'GPstat!'*], or anyone who distributes Covered Software as permitted above, be liable to You for any direct, indirect, special, incidental, or consequential damages of any character including, without limitation, damages for lost profits, loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses, even if such party shall have been informed of the possibility of such damages. This limitation of liability shall not apply to liability for death or personal injury resulting from such party’s negligence to the extent applicable law prohibits such limitation. Some jurisdictions do not allow the exclusion or limitation of incidental or consequential damages, so this exclusion and limitation may not apply to You.
+
+# Change management procedures  
+  
+* The user (coHealth) and contributor (David Fong) do not anticipate any changes
+  to the requirements detailed in this statement of work. However, if changes do
+  arise they must be done in writing by the user and/or contributor and amendments
+  prepared to reflect these
+
+* Upon the request of user (coHealth) or contributor (David Fong), this statement
+  of work is to be reviewed yearly.
+  
+  + If the user is willing to continue the statement of work, then upon
+  the contributor's acceptance of the terms and conditions of the statement of work,
+  the contributor will then accept the terms and conditions of this statement of work.
+
+# Schedule
+
+* 'GPstat!', the software and service, is available in a working state
+  now (25th November 2020). 
+  + Current release version (and previous versions) have
+  been successfully installed, and is currently being used, by a clinic other
+  than coHealth since 2019.
+  
