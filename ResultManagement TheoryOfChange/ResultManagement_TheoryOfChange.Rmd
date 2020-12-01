@@ -369,6 +369,12 @@ by clinician(s) seen, date range checked, action and actioned status. Comments a
 to the result, and upcoming appointments for the patient can also be viewed
 (Figure \@ref(fig:gpstat)).
 
+#### Monitoring and evaluation
+
+*GPstat!* can be used as a monitoring and evaluation tool, e.g. determining
+mean and median time for a non-urgent result to be actioned, allowing ongoing monitoring
+of the goal of timely action and discussion of results.
+
 ![(#fig:gpstat)GPstat! result management](GPstat_results.png){width=100%}
 
 \newpage
