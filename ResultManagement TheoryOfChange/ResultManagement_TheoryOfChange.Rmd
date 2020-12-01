@@ -3,9 +3,9 @@ title: |
   | Result Management (recall procedure)
   | Theory of Change
 author: "David Fong"
-date: "29th November 2020"
+date: "1st December 2020"
 output:
-  pdf_document:
+  bookdown::pdf_document2:
     number_sections: yes
     toc: yes
     toc_depth: 4
@@ -16,7 +16,7 @@ output:
     df_print: paged
     toc: yes
     toc_depth: '4'
-geometry: margin=15mm
+geometry: margin=20mm
 fontsize: 12pt
 documentclass: article
 classoption: a4paper
@@ -31,19 +31,20 @@ library(magrittr)
 
 # Introduction
 
-A 'Theory of Change' is described, where the goal of a timely action and discussion
+A '[Theory of Change](#theory-of-change)' is described, where the goal of a timely action and discussion
 of results follows from the 'input' of a clinician marking a result as requiring action.
 
-Parallels are described between the theory of change and the recall flowchart shown
+Parallels are described between the theory of change and the 
+[recall flowchart](#flowchart-relationship) shown
 in draft version 2 of the recall procedures.
 
-The relationship between some key stages of the theory of change and the **Current**
-recall procedure are compared and contrasted, and risks anticipated, with a proposal
-to add reminders (**Proposal.A**). Potential minimal changes to resolve the issues
-addressed by **Proposal.A** are described in **Minimal.Change.B**.
+The [relationship between some key stages of the theory of change and the **Current**
+recall procedure are compared and contrasted](#toc-procedure) with a proposal
+to add reminders (**Proposal.A**). Potential risks are anticipated. Minimal changes
+to resolve the issues addressed by **Proposal.A** are described in **Minimal.Change.B**.
 
-Notes describe how to view lists of results which are marked as 'non-urgent' and
-not yet notified.
+Notes describe [how to view lists of results which are marked as 'non-urgent' and
+not yet notified](#notes-viewresults).
 
 # Background
 
@@ -59,21 +60,21 @@ Each of these elements hae a role to play in creating a system that is not just
 safe, but also "*efficient, reliable and time-friendly*"
 ^[[“Protect Your Practice – Risk management/Tracking tests”](https://www.avant.org.au/PracticeManager/Protect-Your-Practice/Risk-management/Tracking-tests/)].
 
-# Theory of Change
+# Theory of Change {#theory-of-change}
 
 The Theory of Change explores the relationship between the goal of a timely action
 and discussion of results following from the 'input' of a clinician marking a
 result as requiring action and the prerequisites required for the goal to be
 achieved.
 
-## Logical framework
+## Logical framework {#logical-framework}
 
 Closely related to the Theory of Change is the logical framework, describing
-the stakeholders, inputs, activities, outputs, outcomes and goal/impact (Table 1).
+the stakeholders, inputs, activities, outputs, outcomes and goal/impact (Table \@ref(tab:logframe)).
 
 \
 
-```{r echo=FALSE}
+```{r logframe, echo=FALSE}
 knitr::kable(
   data.frame(
     Element = linebreak(
@@ -122,11 +123,16 @@ knitr::kable(
 \
 
 The links, relationships and pre-requisites between the elements of the logical
-framework are shown graphically in the Theory of Change graph (Figure 1).
+framework are shown graphically in the Theory of Change graph (Figure \@ref(fig:TheoryOfChange)).
 
 \ 
 
-![Theory of Change - Result management, *created with [Theorymaker](http://theorymaker.info/?permalink=ResultManagement)*](Theory Maker - ResultManagement.png){width=92%}
+(ref:theorymaker) Theory of Change - Result management, *created with [Theorymaker](http://theorymaker.info/?permalink=ResultManagement)*
+
+```{r TheoryOfChange, fig.cap = '(ref:theorymaker)', out.width="92%", echo = FALSE}
+knitr::include_graphics("Theory Maker - ResultManagement.png")
+```
+
 
 ```{r include=FALSE, eval=FALSE}
 # for Theory Maker theorymaker.info
@@ -204,42 +210,49 @@ direction=TB
 
 \newpage
 
-## Relationship between Theory of Change and Recall flowchart
+## Relationship between Theory of Change and Recall flowchart {#flowchart-relationship}
 
-Recall flowchart (Figure 2) from version 2 of draft recall procedure.
+Recall flowchart (Figure \@ref(fig:FollowUpSystem)) from version 2 of draft recall procedure.
 
 Only a few relationships are described, with the letters **A**, **B** and **D** and numbers **1**, **2** and **3**.
 
-![Recall flowchart (follow-up system)](Recall Flowchart.png){width=70%}
+![(#fig:FollowUpSystem)Recall flowchart (follow-up system)](Recall Flowchart.png){width=70%}
 
 \newpage
 
-# Relationship between Theory of Change and current, proposed or potential procedures
+# Relationship between Theory of Change and current, proposed or potential procedures {#toc-procedure}
 
 The correlations between the Theory of Change and the current and proposed procedures
-are compared and contrasted in Table 2. These procedures are further detailed below,
+are compared and contrasted in Table \@ref(tab:tocproc). These procedures are further detailed below,
 including issues resolved (compared to the **Current** draft version 2 procedure
 for handling 'non-urgent' results) and hazards.
 
 1. **Current** : Recall system procedure for non-urgent results (2020 draft version 2)
+  + Potential hazards associated with **Current**
+    - Viewing of 'non-urgent' (or 'urgent') results requires explicitly opening
+      the 'Investigations' page of *Best Practice* (Table \@ref(tab:tocproc) : Procedure B).
+      If this procedure is not followed, a clinician may not be aware that the patient
+      they are seeing has a result which requires actioning.
+    - **Current** procedure does not include a process for the initiating clinician
+      to review whether 'non-urgent' results have been actioned appropriately.
 2. **Proposal.A** : Recall system using 'reminders' for non-urgent results
   + Resolution of issues, compared to **Current**
     - Increase the visibility of ‘non-urgent’ result to clinicians seeing the patient
-      (Procedure 'C' in Figure 1 and Table 2)
+      (Procedure 'C' in Figure 1 and Table \@ref(tab:tocproc))
     - Add a mechanism for clinical or administration staff to view lists of results
       which are marked as 'non-urgent' but not yet 'notified'/actioned.
-      (Procedure 'B' in Figure 1 and Table 2)
+      (Procedure 'B' in Figure 1 and Table \@ref(tab:tocproc))
       * When the patient has a result marked ‘non-urgent’ appointment,
         but does not have an appointment within the appropriate timeframe
       * When the result marked ‘non-urgent’ has still not been actioned/’notified’
         within an appropriate timeframe
-  + Hazards associated with **Proposal.A**
-    - Mark 'non-urgent' results with a 'reminder' (Table 2 : Procedure A)
+  + Potential hazards associated with **Proposal.A**
+    - Mark 'non-urgent' results with a 'reminder' (Table \@ref(tab:tocproc) : Procedure A)
       * Requires double-marking of 'non-urgent' result **and** double un-marking
-        (Table 2: Procedures C and D), increasing procedural and time burden. 
+        (Table \@ref(tab:tocproc): Procedures C and D), increasing procedural and time burden. 
         Risks reduced adherence to procedure.
       * Distinct process between clinician notifying 'non-urgent' and 'urgent'
-        results (Table 2 : Procedure D). Increased cognitive burded. Risks
+        results (Table \@ref(tab:tocproc) : Procedure D). Increased cognitive burded. Risks
         reduced adherence to procedure.
       * Significantly distinct procedure between identifying 'non-urgent' and
         'urgent' results for administration staff (Table 1: Procedure B). Increased
@@ -251,7 +264,7 @@ for handling 'non-urgent' results) and hazards.
       * 'Action', unlike 'reminder', is viewed by clinicians but not administration
         staff. 'Action' is not used by administration (or other) staff to
         identify lists of patients with non-urgent results. As a consequence, the
-        way the clinic identifies lists of results requiring action (Table 2 : Procedure B)
+        way the clinic identifies lists of results requiring action (Table \@ref(tab:tocproc) : Procedure B)
         is the same as **Current**.
       * Using 'Action', rather than 'reminder', would resolve the issue for those
         clinicians who feel the need for an extra safety-net (with regard to
@@ -264,12 +277,13 @@ for handling 'non-urgent' results) and hazards.
       routinely checked by the clinician with every patient contact.
   * Mechanisms for clinical or administration staff to view results marked
     ‘non-urgent’ but not yet ‘notified’
-    + Described in 'Notes : List of results marked "non-urgent" and not yet notified' (Section 5.1).
-        - Can be done with ‘Follow up inbox’ (section 5.1.1). Which can also be
-          used for results marked 'Urgent'. As a consequence, the way an
+    + Described in "Notes : List of results marked 'non-urgent' and not yet notified" (Section 5.1).
+        - ‘Follow up inbox’ mechanism described in section $5.1.1$. Same procedure can be
+          used for results marked 'Urgent'. As a consequence, the procedure 
           administrative staff member or clinician identifies 'non-urgent' and
-          'urgent' results (Table 2 : Procedures B and E) remains consistent
-          and/or identical to **Current**.
+          'urgent' results (Table \@ref(tab:tocproc) : Procedures B and E) remains consistent
+          between result categories and/or identical to **Current** procedure.
+        - This mechanism is used daily at Kensington site for results marked 'Urgent'.
 
 
 \renewcommand{\arraystretch}{2}
@@ -332,29 +346,30 @@ knitr::kable(
 
 \newpage
 
-# Notes
+# Notes {#notes}
 
-## List of results marked 'non-urgent' and not yet notified
+## List of results marked 'non-urgent' and not yet notified {#notes-viewresults}
 
 ### Follow up inbox (Best Practice)
 
 From *Best Practice* main menu, choose **Clinical - Follow up inbox**
 
-* Choose required date range
+* Choose required date range (Figure \@ref(fig:followup-inbox))
 * Filter by action 'Non-urgent appointment'
 * Filter by status 'Nil status' (i.e. not 'Given'/notified)
-  + May *also* need to check 'Contacted' (by administration staff, but still not 'Given'/notified by clinician)
+  + May *also* need to check 'Contacted' (by administration staff, but not yet 'Given'/notified by clinician)
 * Choose the clinician who 'checked' the result ('Checked by')
 
-![Follow up inbox](FollowUp_Inbox.png){width=100%}
+![(#fig:followup-inbox)Follow up inbox](FollowUp_Inbox.png){width=100%}
 
 ### GPstat! Result Management
 
 *GPstat!* (written by David Fong) allows viewing of results, filtered
 by clinician(s) seen, date range checked, action and actioned status. Comments attached
-to the result, and upcoming appointments for the patient can also be viewed.
+to the result, and upcoming appointments for the patient can also be viewed
+(Figure \@ref(fig:gpstat)).
 
-![GPstat! result management](GPstat_results.png){width=100%}
+![(#fig:gpstat)GPstat! result management](GPstat_results.png){width=100%}
 
 \newpage
 
