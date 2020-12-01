@@ -252,8 +252,8 @@ for handling 'non-urgent' results) and hazards.
         (Table \@ref(tab:tocproc): Procedures C and D), increasing procedural and time burden. 
         Risks reduced adherence to procedure.
       * Distinct process between clinician notifying 'non-urgent' and 'urgent'
-        results (Table \@ref(tab:tocproc) : Procedure D). Increased cognitive burded. Risks
-        reduced adherence to procedure.
+        results (Table \@ref(tab:tocproc) : Procedure D). Increased cognitive burden.
+        Risks reduced adherence to procedure.
       * Significantly distinct procedure between identifying 'non-urgent' and
         'urgent' results for administration staff (Table 1: Procedure B). Increased
         time required for administration staff to learn multiple procedures.
