@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(magrittr)
 library(ggplot2)
+library(RColorBrewer)
 ```
 
 'Low-frequency' mental health conditions : schizophrenia, bipolar disorder
@@ -76,9 +77,10 @@ ggplot(
   fobt %>%
     mutate(clinic_group = paste(clinic, lowfreq)),
   aes(
-    fill = factor(status, levels = c("UTD", "Late", "Never")),
+    fill = factor(status, levels = c("Never", "Late", "UTD")),
     y = n, x = clinic_group
   )) +
+  scale_fill_brewer(palette = "Spectral") +
   geom_bar(position = "stack", stat = "identity") +
   coord_flip() + 
   ggtitle("Number of patients with up-to-date bowel cancer screening") +
@@ -92,9 +94,10 @@ ggplot(
   fobt %>%
     mutate(clinic_group = paste(clinic, lowfreq)),
   aes(
-    fill = factor(status, levels = c("UTD", "Late", "Never")),
+    fill = factor(status, levels = c("Never", "Late", "UTD")),
     y = n, x = clinic_group
   )) +
+  scale_fill_brewer(palette = "Spectral") +
   geom_bar(position = "fill", stat = "identity") +
   coord_flip() + 
   ggtitle("Proportion of patients with up-to-date bowel cancer screening") +
@@ -149,9 +152,10 @@ ggplot(
   cst %>%
     mutate(clinic_group = paste(clinic, lowfreq)),
   aes(
-    fill = factor(status, levels = c("UTD", "Late", "Never")),
+    fill = factor(status, levels = c("Never", "Late", "UTD")),
     y = n, x = clinic_group
   )) +
+  scale_fill_brewer(palette = "Spectral") +
   geom_bar(position = "stack", stat = "identity") +
   coord_flip() + 
   ggtitle("Number of patients with up-to-date cervical cancer screening") +
@@ -165,9 +169,10 @@ ggplot(
   cst %>%
     mutate(clinic_group = paste(clinic, lowfreq)),
   aes(
-    fill = factor(status, levels = c("UTD", "Late", "Never")),
+    fill = factor(status, levels = c("Never", "Late", "UTD")),
     y = n, x = clinic_group
   )) +
+  scale_fill_brewer(palette = "Spectral") +
   geom_bar(position = "fill", stat = "identity") +
   coord_flip() + 
   ggtitle("Proportion of patients with up-to-date cervical cancer screening") +
