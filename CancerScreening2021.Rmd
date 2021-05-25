@@ -1,0 +1,177 @@
+---
+title: "Cancer Screening 2021"
+author: "David Fong"
+date: "25th May 2021"
+output:
+  rmdformats::readthedown:
+    toc_depth: 4
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message = FALSE}
+library(dplyr)
+library(magrittr)
+library(ggplot2)
+```
+
+'Low-frequency' mental health conditions : schizophrenia, bipolar disorder
+
+Of the ninety-four (94) active patients at Kensington who EITHER have a coded
+diagnosis of a low-frequency mental health disorder OR have a major tranquilliser
+in their medication list, nineteen (19) do NOT have a coded diagnosis of a
+low-frequency mental health disorder.
+
+## Bowel cancer screening
+
+Age 50 to 74 years inclusive, active patients.
+
+
+```{r data_bowel}
+fobt <- data.frame(
+  clinic = character(),
+  lowfreq = logical(),
+  status = character(),
+  n = integer()
+)
+
+fobt <- fobt %>%
+  add_row(clinic = "Kensington", lowfreq = TRUE, status = "UTD", n = 8) %>%
+  add_row(clinic = "Kensington", lowfreq = TRUE, status = "Late", n = 2+3+9) %>%
+  # the three numbers in 'Late' are actually 2-3, 3-4 and >4 years
+  add_row(clinic = "Kensington", lowfreq = TRUE, status = "Never", n = 62) %>%
+  add_row(clinic = "Kensington", lowfreq = FALSE, status = "UTD", n = 204) %>%
+  add_row(clinic = "Kensington", lowfreq = FALSE, status = "Late", n = 61+22+85) %>%
+  add_row(clinic = "Kensington", lowfreq = FALSE, status = "Never", n = 610) %>%
+  add_row(clinic = "Paisley", lowfreq = TRUE, status = "UTD", n = 15) %>%
+  add_row(clinic = "Paisley", lowfreq = TRUE, status = "Late", n = 5+4+7) %>%
+  # the three numbers in 'Late' are actually 2-3, 3-4 and >4 years
+  add_row(clinic = "Paisley", lowfreq = TRUE, status = "Never", n = 62) %>%
+  add_row(clinic = "Paisley", lowfreq = FALSE, status = "UTD", n = 306) %>%
+  add_row(clinic = "Paisley", lowfreq = FALSE, status = "Late", n = 106+46+126) %>%
+  add_row(clinic = "Paisley", lowfreq = FALSE, status = "Never", n = 857) %>%
+  add_row(clinic = "Collingwood", lowfreq = TRUE, status = "UTD", n = 15) %>%
+  add_row(clinic = "Collingwood", lowfreq = TRUE, status = "Late", n = 3+7+8) %>%
+  # the three numbers in 'Late' are actually 2-3, 3-4 and >4 years
+  add_row(clinic = "Collingwood", lowfreq = TRUE, status = "Never", n = 92) %>%
+  add_row(clinic = "Collingwood", lowfreq = FALSE, status = "UTD", n = 282) %>%
+  add_row(clinic = "Collingwood", lowfreq = FALSE, status = "Late", n = 74+51+120) %>%
+  add_row(clinic = "Collingwood", lowfreq = FALSE, status = "Never", n = 1338) %>%
+  add_row(clinic = "Fitzroy", lowfreq = TRUE, status = "UTD", n = 15) %>%
+  add_row(clinic = "Fitzroy", lowfreq = TRUE, status = "Late", n = 3+4+7) %>%
+  # the three numbers in 'Late' are actually 2-3, 3-4 and >4 years
+  add_row(clinic = "Fitzroy", lowfreq = TRUE, status = "Never", n = 104) %>%
+  add_row(clinic = "Fitzroy", lowfreq = FALSE, status = "UTD", n = 208) %>%
+  add_row(clinic = "Fitzroy", lowfreq = FALSE, status = "Late", n = 62+39+78) %>%
+  add_row(clinic = "Fitzroy", lowfreq = FALSE, status = "Never", n = 1042)
+```
+
+### Plots
+
+```{r plot_bowel_n}
+ggplot(
+  fobt %>%
+    mutate(clinic_group = paste(clinic, lowfreq)),
+  aes(
+    fill = factor(status, levels = c("UTD", "Late", "Never")),
+    y = n, x = clinic_group
+  )) +
+  geom_bar(position = "stack", stat = "identity") +
+  coord_flip() + 
+  ggtitle("Number of patients with up-to-date bowel cancer screening") +
+  ylab("n") + xlab("Clinic and low-frequency mental health condition status") +
+  guides(fill = guide_legend("Screening status"))
+
+```
+
+```{r plot_bowel_proportion}
+ggplot(
+  fobt %>%
+    mutate(clinic_group = paste(clinic, lowfreq)),
+  aes(
+    fill = factor(status, levels = c("UTD", "Late", "Never")),
+    y = n, x = clinic_group
+  )) +
+  geom_bar(position = "fill", stat = "identity") +
+  coord_flip() + 
+  ggtitle("Proportion of patients with up-to-date bowel cancer screening") +
+  ylab("Proportion") + xlab("Clinic and low-frequency mental health condition status") +
+  guides(fill = guide_legend("Screening status"))
+
+```
+
+## Cervical cancer screening
+
+Age 30 to 74 years inclusive, active patients
+
+```{r data_cst}
+cst <- data.frame(
+  clinic = character(),
+  lowfreq = logical(),
+  status = character(),
+  n = integer()
+)
+
+cst <- cst %>%
+  add_row(clinic = "Kensington", lowfreq = TRUE, status = "UTD", n = 36) %>%
+  add_row(clinic = "Kensington", lowfreq = TRUE, status = "Late", n = 11) %>%
+  add_row(clinic = "Kensington", lowfreq = TRUE, status = "Never", n = 14) %>%
+  add_row(clinic = "Kensington", lowfreq = FALSE, status = "UTD", n = 692) %>%
+  add_row(clinic = "Kensington", lowfreq = FALSE, status = "Late", n = 117) %>%
+  add_row(clinic = "Kensington", lowfreq = FALSE, status = "Never", n = 254) %>%
+  add_row(clinic = "Paisley", lowfreq = TRUE, status = "UTD", n = 49) %>%
+  add_row(clinic = "Paisley", lowfreq = TRUE, status = "Late", n = 14) %>%
+  add_row(clinic = "Paisley", lowfreq = TRUE, status = "Never", n = 23) %>%
+  add_row(clinic = "Paisley", lowfreq = FALSE, status = "UTD", n = 1043) %>%
+  add_row(clinic = "Paisley", lowfreq = FALSE, status = "Late", n = 172) %>%
+  add_row(clinic = "Paisley", lowfreq = FALSE, status = "Never", n = 517) %>%
+  add_row(clinic = "Collingwood", lowfreq = TRUE, status = "UTD", n = 47) %>%
+  add_row(clinic = "Collingwood", lowfreq = TRUE, status = "Late", n = 19) %>%
+  add_row(clinic = "Collingwood", lowfreq = TRUE, status = "Never", n = 33) %>%
+  add_row(clinic = "Collingwood", lowfreq = FALSE, status = "UTD", n = 840) %>%
+  add_row(clinic = "Collingwood", lowfreq = FALSE, status = "Late", n = 218) %>%
+  add_row(clinic = "Collingwood", lowfreq = FALSE, status = "Never", n = 1399) %>%
+  add_row(clinic = "Fitzroy", lowfreq = TRUE, status = "UTD", n = 49) %>%
+  add_row(clinic = "Fitzroy", lowfreq = TRUE, status = "Late", n = 19) %>%
+  add_row(clinic = "Fitzroy", lowfreq = TRUE, status = "Never", n = 32) %>%
+  add_row(clinic = "Fitzroy", lowfreq = FALSE, status = "UTD", n = 673) %>%
+  add_row(clinic = "Fitzroy", lowfreq = FALSE, status = "Late", n = 183) %>%
+  add_row(clinic = "Fitzroy", lowfreq = FALSE, status = "Never", n = 597)
+```
+
+### Plots
+
+```{r plot_cst_n}
+ggplot(
+  cst %>%
+    mutate(clinic_group = paste(clinic, lowfreq)),
+  aes(
+    fill = factor(status, levels = c("UTD", "Late", "Never")),
+    y = n, x = clinic_group
+  )) +
+  geom_bar(position = "stack", stat = "identity") +
+  coord_flip() + 
+  ggtitle("Number of patients with up-to-date cervical cancer screening") +
+  ylab("n") + xlab("Clinic and low-frequency mental health condition status") +
+  guides(fill = guide_legend("Screening status"))
+
+```
+
+```{r plot_cst_proportion}
+ggplot(
+  cst %>%
+    mutate(clinic_group = paste(clinic, lowfreq)),
+  aes(
+    fill = factor(status, levels = c("UTD", "Late", "Never")),
+    y = n, x = clinic_group
+  )) +
+  geom_bar(position = "fill", stat = "identity") +
+  coord_flip() + 
+  ggtitle("Proportion of patients with up-to-date cervical cancer screening") +
+  ylab("Proportion") + xlab("Clinic and low-frequency mental health condition status") +
+  guides(fill = guide_legend("Screening status"))
+
+```
