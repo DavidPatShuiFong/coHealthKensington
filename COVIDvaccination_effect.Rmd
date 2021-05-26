@@ -47,6 +47,12 @@ references:
   issued:
     year: 2021
   URL: https://www.ctvnews.ca/health/coronavirus/risks-of-rare-blood-clot-even-lower-with-second-dose-of-astrazeneca-experts-say-1.5437073
+- id: yellowcard
+  title: "Coronavirus Vaccine - summary of Yellow Card reporting"
+  container-title: "Medicines and Healthcare products Regulatory Agency"
+  issued:
+    year: 2021
+  URL: https://www.gov.uk/government/publications/coronavirus-covid-19-vaccine-adverse-reactions/
 ---
 
 ```{r setup, include=FALSE}
@@ -90,7 +96,7 @@ germany_vax <- read_csv("~/Rprojects/coHealthKensington/Germany_COVIDvax_dataset
 
 Selection criteria:
 
-* high rate of overall coverage (35% as of May 2021), including vaccines which are *not* Astra-Zeneca)
+* high rate of overall coverage (35% as of May 2021), including vaccines which are *not* Astra-Zeneca
 * the availability of COVID case and death data at least two (preferably three) weeks after 35% single-dose COVID vaccination coverage achieved
 * high rates of COVID-19 cases/mortality in a December 2020 to January 2021 peak
   + At least 50 deaths daily (seven day rolling average)
@@ -102,7 +108,7 @@ owid %>%
   # at least 35% vaccination, at least 2 weeks before today
   group_by(location) %>% #
   arrange(people_vaccinated_per_hundred) %>%
-  slice(1) %>% # the earliest date of reaching 40%
+  slice(1) %>% # the earliest date of reaching 35%
   ungroup() %>%
   inner_join(
     owid %>%
@@ -117,7 +123,7 @@ owid %>%
   ) %>%
   select(location, date, new_deaths_smoothed) %>%
   kbl(
-    caption = "Countries with greater than 35% vaccine coverage and significant mortality in Dec 20/Jan 21",
+    caption = "Countries with greater than 35% vaccine coverage as of May 2021 and significant mortality in Dec 20/Jan 21",
     col.names = c("Country", "Date of 35% coverage", "Peak deaths Dec 20/Jan 21"),
     digits = 1
   ) %>%
@@ -346,6 +352,14 @@ germany_summary %>%
   kable_styling()
 ```
 
+The United Kingdom reached 35% single-dose vaccine coverage on 13th March 2021.
+
+From [Coronavirus Vaccine - summary of Yellow Card Reporting (data included: 09/12/2020 to 14/03/2021)](https://www.gov.uk/government/publications/coronavirus-covid-19-vaccine-adverse-reactions/) - old edition accessed using [Wayback Machine](https://archive.org/web/):
+
+* *'As of 14 March, an estimated 10.9 million first doses of the Pfizer/BioNTech vaccine and 13.7 million doses of the Oxford University/AstraZeneca vaccine, had been administered, and around 1.3 million second doses, mostly the Pfizer/BioNTech vaccine, had been administered.'*
+
+Canada reached 35% single-dose vaccine coverage on 5th May 2021.
+
 [A CTV news report "Risks of rare blood clot even lower with second dose of AstraZeneca, experts say"](https://www.ctvnews.ca/health/coronavirus/risks-of-rare-blood-clot-even-lower-with-second-dose-of-astrazeneca-experts-say-1.5437073), dated 20th May 2021, reports:
 
 * *'Britain, which has had the AstraZeneca shot in circulation much longer than Canada, has administered more than 23 million first doses of the vaccine'*
@@ -357,10 +371,8 @@ germany_summary %>%
 # 'Britain, which has had the AstraZeneca shot in circulation much longer than Canada, has administered more than 23 million first doses of the vaccine'
 # 'In Canada, approximately 2.1 million people have received one dose of the AstraZeneca vaccine'
 
-effectiveness[effectiveness$country == "United Kingdom", "astrazeneca_proportion"] <-
-  23000000/(owid %>%
-              filter(location == "United Kingdom", date == as.Date("2021-05-20")) %>%
-              pull(people_vaccinated))
+effectiveness[effectiveness$country == "United Kingdom", "astrazeneca_proportion"] <- 
+  13.7/(10.9 + 13.7)
 
 effectiveness[effectiveness$country == "Canada", "astrazeneca_proportion"] <-
   2100000/(owid %>%
