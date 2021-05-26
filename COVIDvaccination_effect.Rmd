@@ -53,6 +53,27 @@ references:
   issued:
     year: 2021
   URL: https://www.gov.uk/government/publications/coronavirus-covid-19-vaccine-adverse-reactions/
+- id: unicefchile
+  title: "Chile receives first shipment of vaccines against COVID-19 through COVAX"
+  container-title: "Unicef"
+  issued:
+    date-parts: [[2021, 4, 28]]
+  URL: https://www.unicef.org/lac/en/press-releases/chile-receives-first-shipment-vaccines-against-covid-19-through-covax
+- id: bbcchile
+  title: "Chile sees Covid surge despite vaccination success"
+  author:
+  - Jane Chambers
+  container-title: "BBC"
+  issued:
+    date-parts: [[2021, 4, 16]]
+  URL: https://www.bbc.com/news/world-latin-america-56731801
+- id: republicworldchile
+  title: "First AstraZeneca COVID Vaccines Arrive In Chile"
+  author: "Associated Press Television News"
+  container-title: "RepublicWorld"
+  issued:
+    date-parts: [[2021, 04, 24]]
+  URL: https://www.republicworld.com/world-news/south-america/first-astrazeneca-covid-vaccines-arrive-in-chile.html
 ---
 
 ```{r setup, include=FALSE}
