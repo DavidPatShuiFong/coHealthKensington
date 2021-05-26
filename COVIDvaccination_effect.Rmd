@@ -71,31 +71,6 @@ COVID-19 cases and death?
 
 ## Data
 
-Countries selected on the basis of overall relatively high rate of overall coverage (40%
-as of May 2021, including vaccines which are *not* Astra-Zeneca), the availability of
-COVID case and death data approximately three weeks after 35% single-dose COVID vaccination
-coverage achieved and high rates of COVID-19 cases and death in a December 2020
-to January 2021 peak.
-
-Both Hungary and Canada experienced additional 'peaks' between January 2021 and
-the time they achieved 35% coverage.
-
-Canada achieved 35% single-dose coverage on 5th May 2021.
-Germany achieved 35% single-dose coverage on 12th May 2021.
-(As of 25th May 2021, it is not quite yet three weeks since either of those two dates)
-
-Daily number of cases (seven day rolling average), daily number of deaths (seven day rolling average) and proportion
-of population vaccinated derived from [Our World in Data](https://github.com/owid/covid-19-data/tree/master/public/data/).
-
-### Timepoints
-
-* Day of maximum cases in December 2020 to January 2021
-* Day of maximum deaths in December 2020 to January 2021
-* Day of 35% single-dose COVID vaccination coverage (any COVID-19 vaccine)
-* Three weeks after the day of 35% single-dose COVID vaccination coverage
-  + vaccines are considered effective one to two weeks after delivery of dose
-  + COVID deaths tend to lag case-finding by one to two weeks
-
 ```{r read_data, message = FALSE}
 # from "Our World in Data"
 owid = read_csv(
@@ -111,13 +86,71 @@ hungary_vax <- read_csv("~/Rprojects/coHealthKensington/Hungary_COVIDvax_dataset
 germany_vax <- read_csv("~/Rprojects/coHealthKensington/Germany_COVIDvax_dataset_2021-W19.csv")
 ```
 
+### Country selection
+
+Selection criteria:
+
+* high rate of overall coverage (35% as of May 2021), including vaccines which are *not* Astra-Zeneca)
+* the availability of COVID case and death data at least two (preferably three) weeks after 35% single-dose COVID vaccination coverage achieved
+* high rates of COVID-19 cases/mortality in a December 2020 to January 2021 peak
+  + At least 50 deaths daily (seven day rolling average)
+
+```{r message=FALSE}
+owid %>%
+  select(location, date, people_vaccinated_per_hundred) %>%
+  filter(people_vaccinated_per_hundred >= 35, date <= (Sys.Date() - weeks(2))) %>%
+  # at least 35% vaccination, at least 2 weeks before today
+  group_by(location) %>% #
+  arrange(people_vaccinated_per_hundred) %>%
+  slice(1) %>% # the earliest date of reaching 40%
+  ungroup() %>%
+  inner_join(
+    owid %>%
+      select(location, date, new_deaths_smoothed) %>%
+      filter(date >= as.Date("2020-12-01") & date <= as.Date("2021-01-31")) %>%
+      filter(new_deaths_smoothed >= 50) %>%
+      group_by(location) %>%
+      arrange(desc(new_deaths_smoothed)) %>%
+      slice(1) %>% # choose the maximum death rate from Dec 20 to Jan 21
+      ungroup() %>%
+      select(location, new_deaths_smoothed)
+  ) %>%
+  select(location, date, new_deaths_smoothed) %>%
+  kbl(
+    caption = "Countries with greater than 35% vaccine coverage and significant mortality in Dec 20/Jan 21",
+    col.names = c("Country", "Date of 35% coverage", "Peak deaths Dec 20/Jan 21"),
+    digits = 1
+  ) %>%
+  kable_styling()
+```
+
+Canada, Chile and Hungary experienced additional 'peaks' after January 2021.
+
+Canada achieved 35% single-dose coverage on 5th May 2021.
+Germany achieved 35% single-dose coverage on 12th May 2021.
+(As of 25th May 2021, it is not quite yet three weeks since either of those two dates)
+
+Daily number of cases (seven day rolling average), daily number of deaths (seven day rolling average) and proportion
+of population vaccinated derived from [Our World in Data](https://github.com/owid/covid-19-data/tree/master/public/data/).
+
+### Timepoints
+
+* Day of maximum cases in December 2020 to January 2021
+* Day of maximum deaths in December 2020 to January 2021
+* Day of 35% single-dose COVID vaccination coverage (any COVID-19 vaccine)
+* At least two, preferably three, weeks after the day of 35% single-dose COVID vaccination coverage
+  + vaccines are considered effective one to two weeks after delivery of dose
+  + COVID deaths tend to lag case-finding by one to two weeks
+
+
+
 ```{r data}
 countries <- owid %>%
   select(location, date, new_cases_smoothed, new_deaths_smoothed, people_vaccinated_per_hundred) %>%
   filter(
     location == "Canada" | location == "Israel" |
       location == "United States" | location == "United Kingdom" |
-      location == "Hungary" | location == "Germany")
+      location == "Hungary" | location == "Germany" | location == "Chile")
 
 # Iceland only had approximately 10 cases per month in Dec-January 2021
 # (and even less cases at the time of 35% vaccination)
@@ -132,7 +165,7 @@ cases <- countries[FALSE,] # 'empty' version of countries data
 for (i in unique(countries$location)) {
   country <- countries %>% filter(location == i)
   
-  # days of max cases and deaths in January 2021
+  # days of max cases and deaths in December/January 2021
   max_cases <- country %>%
     filter(date >= ymd("2020-12-01") & date <= ymd("2021-01-31")) %>%
     slice_max(new_cases_smoothed)
@@ -168,8 +201,12 @@ cases <- cases %>%
 
 ```{r}
 cases %>%
+  arrange(country, date) %>%
+  group_by(country, date) %>%
+  slice(1) %>% # remove duplicates
+  ungroup() %>%
   kbl(
-    caption = "January peak cases/deaths (7-day smoothed) and 3-weeks after 35% single-dose coverage",
+    caption = "December/January peak cases/deaths (7-day smoothed) and 3-weeks after 35% single-dose coverage",
     col.names = c("Country", "Date", "Daily cases", "Daily deaths", "Vaccinated (at least one dose) per hundred"),
     digits = 1
   ) %>%
@@ -245,6 +282,10 @@ effectiveness %>%
 
 Neither Israel or United States used Astra-Zeneca vaccines at all.
 
+Chile received its first shipment of Astra-Zeneca vaccines on April 23, several weeks
+after Chile first achieved 35% coverage (March 30, 2021). Until April, Chile used
+CoronaVac and Pfizer COVID vaccinations.
+
 Hungary and German vaccination brand delivery available via the European Centre for Disease and Control. 
 
 Vaccines codes (ECDC):
@@ -256,13 +297,21 @@ Vaccines codes (ECDC):
 * MOD - Moderna
 * JANSS - Janssen
 
+Hungary reached 35% single-dose vaccine coverage on 21st April 2021 (week 16 of 2021).
+
+Germany reached 35% single-dose vaccine coverage on 12th May 2021 (week 19 of 2021).
+
 ```{r astrazeneca_usage, message=FALSE}
 effectiveness[effectiveness$country == "United States", "astrazeneca_proportion"] <- 0
 effectiveness[effectiveness$country == "Israel", "astrazeneca_proportion"] <- 0
+effectiveness[effectiveness$country == "Chile", "astrazeneca_proportion"] <- 0
 
 # sourced from European Centre for Disease Prevention and Control
 # week 19 of 2021
 hungary_summary <- hungary_vax %>%
+  filter(Week != "2021-17" & Week != "2021-18" & Week != "2021-19") %>%
+  # Hungary reached 35% single-dose vaccine coverage on 21st April 2021 (week 16 of 2021).
+  # so exclude week 17, 18 and 19
   select(`Vaccine brand`, `First dose`) %>%
   rename(Vaccine = `Vaccine brand`, Doses = `First dose`) %>%
   group_by(Vaccine) %>%
@@ -300,6 +349,7 @@ germany_summary %>%
 [A CTV news report "Risks of rare blood clot even lower with second dose of AstraZeneca, experts say"](https://www.ctvnews.ca/health/coronavirus/risks-of-rare-blood-clot-even-lower-with-second-dose-of-astrazeneca-experts-say-1.5437073), dated 20th May 2021, reports:
 
 * *'Britain, which has had the AstraZeneca shot in circulation much longer than Canada, has administered more than 23 million first doses of the vaccine'*
+  + note that this report (20th May 2021) is two months after the date of the United Kingdom achieving 35% single-dose vaccine coverage.
 * *'In Canada, approximately 2.1 million people have received one dose of the AstraZeneca vaccine'*
 
 ```{r}
@@ -336,15 +386,19 @@ after 35% single-dose coverage has been achieved.
 ggplot(
   effectiveness,
   aes(
-    x = astrazeneca_proportion, y = case_reduction_ratio,
+    x = astrazeneca_proportion, y = log_case_reduction,
+    color = astrazeneca_proportion + log_case_reduction,
     label = country
   )) +
-  xlim(-0.05, .8) +
-  geom_point() +
+  xlim(-0.05, .75) +
+  geom_point(shape = 16, size = 2, show.legend = FALSE) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  scale_color_gradient(low = "#0091ff", high = "#f0650e") +
   geom_text(aes(label = country), hjust = -0.1, vjust = 0) +
-  ggtitle("Reduction in COVID-19 cases compared to January 2021 peak", subtitle = "Three weeks after 35% single-dose coverage") +
+  ggtitle("Reduction in COVID-19 cases compared to December 2020/January 2021 peak", subtitle = "Three weeks after 35% single-dose coverage") +
   xlab("Astra-Zeneca as proportion of administered vaccines") +
-  ylab("Ratio of case reduction")
+  ylab("Ratio of case reduction (log)")
   
 ```
 
@@ -353,14 +407,20 @@ ggplot(
   effectiveness,
   aes(
     x = astrazeneca_proportion, y = log_death_reduction,
+    color = astrazeneca_proportion + log_death_reduction,
     label = country
   )) +
-  xlim(-0.05, .8) +
-  geom_point() +
+  xlim(-0.05, .75) +
+  geom_point(shape = 16, size = 2, show.legend = FALSE) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  scale_color_gradient(low = "#0091ff", high = "#f0650e") +
   geom_text(aes(label = country), hjust = -0.1, vjust = 0) +
-  ggtitle("Reduction in COVID-19 deaths compared to January 2021 peak", subtitle = "Three weeks after 35% single-dose coverage") +
+  ggtitle("Reduction in COVID-19 deaths compared to December 2020/January 2021 peak", subtitle = "Three weeks after 35% single-dose coverage") +
   xlab("Astra-Zeneca as proportion of administered vaccines") +
-  ylab("Ratio of death reduction")
+  ylab("Ratio of death reduction (log)")
 ```
 
 ## References
+
+Full [source code on Github](https://github.com/DavidPatShuiFong/coHealthKensington/blob/master/COVIDvaccination_effect.Rmd)
