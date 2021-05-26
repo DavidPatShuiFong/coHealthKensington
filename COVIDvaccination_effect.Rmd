@@ -1,0 +1,366 @@
+---
+title: "COVID vaccination effectiveness"
+author: "David Fong"
+date: "26th May 2021"
+output:
+  rmdformats::readthedown:
+    toc_depth: 4
+    code_folding: hide
+references:
+- id: ourworldindata
+  title: "Coronavirus Pandemic (COVID-19)"
+  author:
+  - Max Roser
+  - Hannah Ritchie
+  - Esteban Ortiz-Ospina
+  - Joe Hasell
+  issued:
+      year: 2020
+  URL: https://ourworldindata.org/coronavirus
+- id: ourworldindatavax
+  title: "A global database of COVID-19 vaccinations"
+  author:
+  - Ritchie, Mathieu, E.
+  - Ritchie, H.
+  - Ortiz-Ospina, E. et al.
+  container-title: Nat Hum Behav
+  issued:
+    year: 2021
+  URL: https://doi.org/10.1038/s41562-021-01122-8
+- id: hungarytoday
+  title: "Hungary’s Vaccinations: Pfizer Used for Most, Sinopharm Catching Up"
+  author:
+  - Tamás Vaski
+  issued:
+    year: 2021
+  container-title: Hungary Today
+  URL: https://hungarytoday.hu/hungary-vaccinations-coronavirus-operative-board-statistics-vaccination-amounts-number-of-inoculated/
+- id: ecdc
+  title: "COVID-19 Vaccine rollout overview (Week 19, 2021)"
+  container-title: European Center for Disease Prevention and Control
+  issued:
+    year: 2021
+  URL: https://covid19-vaccine-report.ecdc.europa.eu/#3_Uptake_of_at_least_one_vaccine_dose_among_adults
+- id: ctvnews
+  title: "Risks of rare blood clot even lower with second dose of AstraZeneca, experts say"
+  container-title: "CTV News"
+  issued:
+    year: 2021
+  URL: https://www.ctvnews.ca/health/coronavirus/risks-of-rare-blood-clot-even-lower-with-second-dose-of-astrazeneca-experts-say-1.5437073
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message = FALSE}
+library(tidyverse)
+library(dplyr)
+library(magrittr)
+library(lubridate)
+library(kableExtra)
+library(ggplot2)
+library(RColorBrewer)
+```
+
+## Objective
+
+Is Astra-Zeneca doses administered (at least a single dose) - as a proportion of
+*all* COVID vaccination administered - related to a national reduction in
+COVID-19 cases and death?
+
+## Data
+
+Countries selected on the basis of overall relatively high rate of overall coverage (40%
+as of May 2021, including vaccines which are *not* Astra-Zeneca), the availability of
+COVID case and death data approximately three weeks after 35% single-dose COVID vaccination
+coverage achieved and high rates of COVID-19 cases and death in a December 2020
+to January 2021 peak.
+
+Both Hungary and Canada experienced additional 'peaks' between January 2021 and
+the time they achieved 35% coverage.
+
+Canada achieved 35% single-dose coverage on 5th May 2021.
+Germany achieved 35% single-dose coverage on 12th May 2021.
+(As of 25th May 2021, it is not quite yet three weeks since either of those two dates)
+
+Daily number of cases (seven day rolling average), daily number of deaths (seven day rolling average) and proportion
+of population vaccinated derived from [Our World in Data](https://github.com/owid/covid-19-data/tree/master/public/data/).
+
+### Timepoints
+
+* Day of maximum cases in December 2020 to January 2021
+* Day of maximum deaths in December 2020 to January 2021
+* Day of 35% single-dose COVID vaccination coverage (any COVID-19 vaccine)
+* Three weeks after the day of 35% single-dose COVID vaccination coverage
+  + vaccines are considered effective one to two weeks after delivery of dose
+  + COVID deaths tend to lag case-finding by one to two weeks
+
+```{r read_data, message = FALSE}
+# from "Our World in Data"
+owid = read_csv(
+  "https://covid.ourworldindata.org/data/owid-covid-data.csv",
+  col_names=TRUE,
+  col_types="ccc?nnnnnnnnnnnnnnnnnnnnnnnnnnnnncnnnnnnnnnnnnnnnnnnnnnnnnn",
+  skip_empty_rows = FALSE
+)
+
+# European Center for Disease Prevention and Control, Week 19 of 2021
+# used to derive use of different vaccine brands in Hungary
+hungary_vax <- read_csv("~/Rprojects/coHealthKensington/Hungary_COVIDvax_dataset_2021-W19.csv")
+germany_vax <- read_csv("~/Rprojects/coHealthKensington/Germany_COVIDvax_dataset_2021-W19.csv")
+```
+
+```{r data}
+countries <- owid %>%
+  select(location, date, new_cases_smoothed, new_deaths_smoothed, people_vaccinated_per_hundred) %>%
+  filter(
+    location == "Canada" | location == "Israel" |
+      location == "United States" | location == "United Kingdom" |
+      location == "Hungary" | location == "Germany")
+
+# Iceland only had approximately 10 cases per month in Dec-January 2021
+# (and even less cases at the time of 35% vaccination)
+# Finland had less than 10 deaths per months in Dec-January 2021
+# Cyprus reached 35% vaccination 14th May 2021, and had
+# less than 10 deaths per day in Dec-January 2021
+# Unable to find data on Uruguay vaccine brand numbers,
+# though in Uruguay peak deaths in Dec-Jan 2021 was also approximately 10/day
+
+cases <- countries[FALSE,] # 'empty' version of countries data
+
+for (i in unique(countries$location)) {
+  country <- countries %>% filter(location == i)
+  
+  # days of max cases and deaths in January 2021
+  max_cases <- country %>%
+    filter(date >= ymd("2020-12-01") & date <= ymd("2021-01-31")) %>%
+    slice_max(new_cases_smoothed)
+  max_deaths <- country %>%
+    filter(date >= ymd("2020-12-01") & date <= ymd("2021-01-31")) %>%
+    slice_max(new_deaths_smoothed)
+  
+  # day of 35% single-dose vaccination coverage, and three weeks after that
+  vax_35_date <- country %>%
+    filter(people_vaccinated_per_hundred >= 35 & people_vaccinated_per_hundred < 40) %>%
+    slice_min(people_vaccinated_per_hundred)
+  post35_3week <- country %>%
+    filter(date == nth(date, which.min(abs(date - (vax_35_date$date + weeks(3))))))
+  
+  cases <- cases %>% 
+    add_row(as.data.frame(max_cases)) %>%
+    add_row(as.data.frame(max_deaths)) %>%
+    add_row(as.data.frame(vax_35_date)) %>%
+    add_row(as.data.frame(post35_3week))
+}
+
+cases <- cases %>%
+  rename(
+    country = location,
+    cases = new_cases_smoothed, 
+    # 7-day rolling average
+    deaths = new_deaths_smoothed, 
+    # 7-day rolling average
+    vaccinated = people_vaccinated_per_hundred 
+    # Total number of people who received at least one vaccine dose per 100 people in the total population
+  )
+```
+
+```{r}
+cases %>%
+  kbl(
+    caption = "January peak cases/deaths (7-day smoothed) and 3-weeks after 35% single-dose coverage",
+    col.names = c("Country", "Date", "Daily cases", "Daily deaths", "Vaccinated (at least one dose) per hundred"),
+    digits = 1
+  ) %>%
+  kable_styling()
+```
+
+## Reduction in cases and deaths after 35% of single-dose coverage achieved
+
+Calculate ratio of reduction in cases and deaths (seven day rolling average) three
+weeks after single-dose coverage is achieved.
+
+```{r}
+effectiveness <- data.frame(
+  country = character(),
+  max_cases = numeric(),
+  max_deaths = numeric(),
+  post35_3wk = ymd(),
+  post35_3wk_cases = numeric(),
+  post35_3wk_deaths = numeric(),
+  astrazeneca_proportion = numeric()
+)
+
+for (i in unique(cases$country)) {
+  country_cases <- cases %>% filter(country == i)
+  peak_cases <- country_cases %>%
+    filter(date >= ymd("2020-12-01") & date <= ymd("2021-01-31")) %>%
+    filter(cases == max(cases)) %>%
+    pull(cases)
+  peak_deaths <- country_cases %>%
+    filter(date >= ymd("2020-12-01") & date <= ymd("2021-01-31")) %>%
+    filter(deaths == max(deaths)) %>%
+    pull(deaths)
+  vax_35_date <- country_cases %>%
+    filter(vaccinated >= 35 & vaccinated < 36) %>%
+    pull(date) # date of vaccinations between 0.35 and 0.36
+  post35_3week <- country_cases[which.min(abs((vax_35_date + weeks(3)) - country_cases$date)),] 
+  # closest date to 3 weeks post vax_35_date
+  
+  effectiveness <- effectiveness %>%
+    add_row(
+      country = i,
+      max_cases = peak_cases,
+      max_deaths = peak_deaths,
+      post35_3wk = post35_3week$date,
+      post35_3wk_cases = post35_3week$cases,
+      post35_3wk_deaths = post35_3week$deaths
+      )
+}
+
+effectiveness <- effectiveness %>%
+  mutate(
+    case_reduction_ratio = max_cases/post35_3wk_cases,
+    death_reduction_ratio = max_deaths/post35_3wk_deaths
+  ) %>%
+  mutate(
+    log_case_reduction = log(case_reduction_ratio),
+    log_death_reduction = log(death_reduction_ratio)
+  )
+```
+
+```{r}
+effectiveness %>%
+  select(country, case_reduction_ratio, death_reduction_ratio) %>%
+  kbl(
+    caption = "Reduction in COVID-19 cases and deaths after 35% single-dose vaccination coverage",
+    col.names = c("Country", "Case reduction ratio", "Death reduction ratio"),
+    digits = 2
+  ) %>%
+  kable_styling()
+```
+
+## Astra-Zeneca usage
+
+Neither Israel or United States used Astra-Zeneca vaccines at all.
+
+Hungary and German vaccination brand delivery available via the European Centre for Disease and Control. 
+
+Vaccines codes (ECDC):
+
+* COM - Pfizer/Comirnaty
+* BECNBG - CNBG/Sinopharm
+* SPU - Sputnik V
+* AZ - Astra-Zeneca
+* MOD - Moderna
+* JANSS - Janssen
+
+```{r astrazeneca_usage, message=FALSE}
+effectiveness[effectiveness$country == "United States", "astrazeneca_proportion"] <- 0
+effectiveness[effectiveness$country == "Israel", "astrazeneca_proportion"] <- 0
+
+# sourced from European Centre for Disease Prevention and Control
+# week 19 of 2021
+hungary_summary <- hungary_vax %>%
+  select(`Vaccine brand`, `First dose`) %>%
+  rename(Vaccine = `Vaccine brand`, Doses = `First dose`) %>%
+  group_by(Vaccine) %>%
+  summarize(Doses = sum(Doses))
+# unlike most other European countries, Hungary sourced more than a third
+# of its COVID vaccines from Russian or Chinese brands
+
+effectiveness[effectiveness$country == "Hungary", "astrazeneca_proportion"] <- 
+  hungary_summary[hungary_summary$Vaccine == "AZ", "Doses"]/sum(hungary_summary$Doses)
+
+hungary_summary %>%
+  arrange(desc(Doses)) %>%
+  kbl(caption = "Hungary cumulative first-dose administered COVID vaccine brands, week 19 of 2021") %>%
+  kable_styling()
+```
+
+```{r message=FALSE}
+# sourced from European Centre for Disease Prevention and Control
+# week 19 of 2021
+germany_summary <- germany_vax %>%
+  select(`Vaccine brand`, `First dose`) %>%
+  rename(Vaccine = `Vaccine brand`, Doses = `First dose`) %>%
+  group_by(Vaccine) %>%
+  summarize(Doses = sum(Doses))
+
+effectiveness[effectiveness$country == "Germany", "astrazeneca_proportion"] <- 
+  germany_summary[germany_summary$Vaccine == "AZ", "Doses"]/sum(germany_summary$Doses)
+
+germany_summary %>%
+  arrange(desc(Doses)) %>%
+  kbl(caption = "Germany cumulative first-dose administered COVID vaccine brands, week 19 of 2021") %>%
+  kable_styling()
+```
+
+[A CTV news report "Risks of rare blood clot even lower with second dose of AstraZeneca, experts say"](https://www.ctvnews.ca/health/coronavirus/risks-of-rare-blood-clot-even-lower-with-second-dose-of-astrazeneca-experts-say-1.5437073), dated 20th May 2021, reports:
+
+* *'Britain, which has had the AstraZeneca shot in circulation much longer than Canada, has administered more than 23 million first doses of the vaccine'*
+* *'In Canada, approximately 2.1 million people have received one dose of the AstraZeneca vaccine'*
+
+```{r}
+# CTV news report dated May 20, 2021
+# 'Britain, which has had the AstraZeneca shot in circulation much longer than Canada, has administered more than 23 million first doses of the vaccine'
+# 'In Canada, approximately 2.1 million people have received one dose of the AstraZeneca vaccine'
+
+effectiveness[effectiveness$country == "United Kingdom", "astrazeneca_proportion"] <-
+  23000000/(owid %>%
+              filter(location == "United Kingdom", date == as.Date("2021-05-20")) %>%
+              pull(people_vaccinated))
+
+effectiveness[effectiveness$country == "Canada", "astrazeneca_proportion"] <-
+  2100000/(owid %>%
+              filter(location == "Canada", date == as.Date("2021-05-20")) %>%
+              pull(people_vaccinated))
+
+owid %>%
+  filter(location == "United Kingdom" | location == "Canada") %>%
+  filter(date == as.Date("2021-05-20")) %>%
+  select(location, people_vaccinated) %>%
+  rename(Country = location, `Total vaccinated` = people_vaccinated) %>%
+  kbl(caption = "Total vaccinated, as of 20th May 2021 (source 'Our World in Data')") %>%
+  kable_styling()
+
+```
+
+## Relationship between AstraZeneca vaccine usage and reduction in COVID-19 cases and deaths
+
+Comparing the rates of cases and deaths from peak of December 2020-January 2021 to three weeks
+after 35% single-dose coverage has been achieved.
+
+```{r}
+ggplot(
+  effectiveness,
+  aes(
+    x = astrazeneca_proportion, y = case_reduction_ratio,
+    label = country
+  )) +
+  xlim(-0.05, .8) +
+  geom_point() +
+  geom_text(aes(label = country), hjust = -0.1, vjust = 0) +
+  ggtitle("Reduction in COVID-19 cases compared to January 2021 peak", subtitle = "Three weeks after 35% single-dose coverage") +
+  xlab("Astra-Zeneca as proportion of administered vaccines") +
+  ylab("Ratio of case reduction")
+  
+```
+
+```{r}
+ggplot(
+  effectiveness,
+  aes(
+    x = astrazeneca_proportion, y = log_death_reduction,
+    label = country
+  )) +
+  xlim(-0.05, .8) +
+  geom_point() +
+  geom_text(aes(label = country), hjust = -0.1, vjust = 0) +
+  ggtitle("Reduction in COVID-19 deaths compared to January 2021 peak", subtitle = "Three weeks after 35% single-dose coverage") +
+  xlab("Astra-Zeneca as proportion of administered vaccines") +
+  ylab("Ratio of death reduction")
+```
+
+## References
